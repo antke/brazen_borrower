@@ -12,7 +12,12 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "cmsassets.rgpub.io", pathname: "/sanity/images/**" }],
+    // Every host RiftHunt's catalogue points card art at (checked against all 1,725 printings).
+    remotePatterns: [
+      { protocol: "https", hostname: "cmsassets.rgpub.io", pathname: "/sanity/images/**" },
+      { protocol: "https", hostname: "tcgplayer-cdn.tcgplayer.com", pathname: "/product/**" },
+      { protocol: "https", hostname: "rifthunt.com", pathname: "/img/**" },
+    ],
   },
 }
 
