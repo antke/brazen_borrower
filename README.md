@@ -1,4 +1,4 @@
-# Riftbound card pool
+# Brazen Borrower
 
 Tracks who lent which Riftbound cards to whom, and the cards friends offer to lend.
 Next.js 16, Convex, and UI SDK for every control. Card data comes from RiftHunt's bulk export, synced daily.
@@ -6,7 +6,7 @@ Next.js 16, Convex, and UI SDK for every control. Card data comes from RiftHunt'
 ## Run it
 
 ```sh
-pnpm exec convex dev   # local backend, no account needed
+pnpm exec convex dev   # pushes backend changes to the shared cloud deployment (key in .env.local)
 pnpm dev               # http://localhost:3333
 pnpm test              # every test runs against every kit
 ```

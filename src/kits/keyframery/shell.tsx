@@ -44,7 +44,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <>
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-          <span className="font-semibold tracking-tight">Riftbound card pool</span>
+          <span className="font-semibold tracking-tight">Brazen Borrower</span>
           <nav aria-label="Main" className="flex gap-1">
             {links.map((link) => (
               <Link

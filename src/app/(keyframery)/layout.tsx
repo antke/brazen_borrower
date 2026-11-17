@@ -9,7 +9,7 @@ import "@/kits/keyframery/kit.css"
 const geist = Geist({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Riftbound card pool",
+  title: "Brazen Borrower",
   description: "Who has whose Riftbound cards.",
 }
 
