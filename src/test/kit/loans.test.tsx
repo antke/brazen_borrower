@@ -83,6 +83,33 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     expect(mutations["loans:create"]).not.toHaveBeenCalled()
   })
 
+  test("cards the lender doesn't have in their pool are marked before saving", async () => {
+    queries["pool:list"] = [
+      { _id: "e2", ownerId: "u1", cardId: "c2", quantity: 1, owner: "Alice", card: catalogue[1], lent: 1, available: 0 },
+    ]
+    render(<LoansPage />)
+    const result = await agent.act({
+      steps: [
+        { ref: labels.newLoan, action: "press" },
+        { ref: labels.borrower, action: "setValue", args: ["Bob"] },
+        { ref: labels.addCard, action: "setQuery", args: ["scorcher"] },
+        { ref: labels.addCard, action: "setValue", args: ["Blazing Scorcher · OGN 001"] },
+        { ref: labels.addCard, action: "setQuery", args: ["poro"] },
+        { ref: labels.addCard, action: "setValue", args: ["Pouty Poro · OGN 013"] },
+      ],
+    })
+    expect(result.ok, result.error?.message).toBe(true)
+    const cards = screen.getByRole("list", { name: labels.loanCards }).textContent
+    expect(cards).toContain("Adds 1 to Alice's pool")
+    expect(cards).toContain("Alice's pool 1 → 2")
+    expect(screen.getByRole("status").textContent).toBe("2 cards aren't fully in Alice's pool. Saving adds them there.")
+
+    await agent.act({ steps: [{ ref: labels.lender, action: "setValue", args: ["Uncle Joe"] }] })
+    expect(screen.getByRole("list", { name: labels.loanCards }).textContent).not.toContain("pool")
+    expect(screen.queryByRole("status")).toBeNull()
+    queries["pool:list"] = []
+  })
+
   test("a signed-in member marks a loan returned", async () => {
     render(<LoansPage />)
     const back = await agent.act({ steps: [{ ref: labels.markReturned(openLoan), action: "press" }] })

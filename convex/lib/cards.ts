@@ -39,6 +39,19 @@ export function lentOut(loans: LoanLike[]) {
   return out
 }
 
+/**
+ * How a member's pool must change so they actually have the cards they're lending: a card that isn't offered
+ * is added, and an offer with too few free copies is raised to cover what's out plus this loan (99 at most).
+ */
+export function poolTopUp(
+  item: { cardId: string; quantity: number },
+  pool: { offered?: number; lent: number }
+): { from: number; to: number } | null {
+  const needed = Math.min(99, pool.lent + item.quantity)
+  const offered = pool.offered ?? 0
+  return offered >= needed ? null : { from: offered, to: needed }
+}
+
 export function assertQuantity(quantity: number, min = 1) {
   if (!Number.isInteger(quantity) || quantity < min || quantity > 99)
     throw new Error(`Quantity must be a whole number from ${min} to 99`)

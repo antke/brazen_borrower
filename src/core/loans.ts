@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "convex/react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
+import { poolTopUp } from "../../convex/lib/cards"
 import type { Card } from "./cards"
 import { errorMessage } from "./format"
 import { sameParty, toParty, useMembers, useSession } from "./people"
@@ -32,6 +33,11 @@ export function useMyLoans() {
   }
 }
 
+/** A short mark for a card whose loan will change the lender's pool. */
+export function poolNote(owner: string, change: { from: number; to: number }) {
+  return change.from === 0 ? `Adds ${change.to} to ${owner}'s pool` : `${owner}'s pool ${change.from} → ${change.to}`
+}
+
 /** A loan being recorded; the lender starts as the signed-in member. `save` resolves true once it's stored. */
 export function useLoanDraft() {
   const create = useMutation(api.loans.create)
@@ -42,6 +48,7 @@ export function useLoanDraft() {
   const [borrower, setBorrower] = useState<string | null>(null)
   const [items, setItems] = useState<{ card: Card; quantity: number }[]>([])
   const [error, setError] = useState("")
+  const pool = useQuery(api.pool.list)
   const lender = lenderChoice === undefined ? (me?._id ?? null) : lenderChoice
 
   const addCard = (card: Card) =>
@@ -85,6 +92,19 @@ export function useLoanDraft() {
   const options = (other: string | null) =>
     members.filter((m) => m._id !== other).map((m) => ({ value: m._id as string, label: m.name }))
 
+  // What saving will add to a member lender's pool, worked out the same way the server does it.
+  const lenderParty = lender?.trim() ? toParty(lender, members) : null
+  const lenderMember = lenderParty && "userId" in lenderParty ? members.find((m) => m._id === lenderParty.userId) : undefined
+  const offers = new Map(pool?.filter((r) => r.ownerId === lenderMember?._id).map((r) => [r.cardId as string, r]))
+  const withPoolChanges = items.map((item) => {
+    const offer = offers.get(item.card._id)
+    const change = lenderMember
+      ? poolTopUp({ cardId: item.card._id, quantity: item.quantity }, { offered: offer?.quantity, lent: offer?.lent ?? 0 })
+      : null
+    return { ...item, poolNote: change && poolNote(lenderMember!.name, change) }
+  })
+  const added = withPoolChanges.filter((i) => i.poolNote).length
+
   return {
     lender,
     setLender,
@@ -92,7 +112,10 @@ export function useLoanDraft() {
     borrower,
     setBorrower,
     borrowerOptions: options(lender),
-    items,
+    items: withPoolChanges,
+    poolSummary: added
+      ? `${added === 1 ? "1 card isn't" : `${added} cards aren't`} fully in ${lenderMember!.name}'s pool. Saving adds ${added === 1 ? "it" : "them"} there.`
+      : "",
     addCard,
     setQuantity,
     removeCard,

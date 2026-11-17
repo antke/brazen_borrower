@@ -1,5 +1,5 @@
 import { expect, test } from "vitest"
-import { assertQuantity, lentOut, toCard } from "./cards"
+import { assertQuantity, lentOut, poolTopUp, toCard } from "./cards"
 
 test("toCard keeps the printed number's letter suffix and upper-cases the set", () => {
   expect(
@@ -32,6 +32,13 @@ test("lentOut counts only unreturned loans from members, per lender and card", (
   expect(out.get("alice:x")).toBe(3)
   expect(out.get("alice:y")).toBe(1)
   expect(out.get("bob:x")).toBe(3)
+})
+
+test("poolTopUp adds a card that isn't offered and raises an offer that can't cover the loan", () => {
+  expect(poolTopUp({ cardId: "x", quantity: 2 }, { lent: 0 })).toEqual({ from: 0, to: 2 })
+  expect(poolTopUp({ cardId: "x", quantity: 2 }, { offered: 3, lent: 0 })).toBeNull()
+  expect(poolTopUp({ cardId: "x", quantity: 2 }, { offered: 3, lent: 2 })).toEqual({ from: 3, to: 4 })
+  expect(poolTopUp({ cardId: "x", quantity: 5 }, { offered: 99, lent: 99 })).toBeNull()
 })
 
 test("assertQuantity accepts whole numbers in range only", () => {

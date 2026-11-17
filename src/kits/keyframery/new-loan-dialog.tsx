@@ -4,6 +4,7 @@ import { useState } from "react"
 import { cardLabel } from "@/core/cards"
 import { labels } from "@/core/labels"
 import { useLoanDraft } from "@/core/loans"
+import { Badge } from "@/kits/keyframery/ui/badge"
 import { Button } from "@/kits/keyframery/ui/button"
 import {
   Dialog,
@@ -39,7 +40,10 @@ export function NewLoanDialog() {
               {draft.items.map((item) => (
                 <li key={item.card._id} className="flex items-center gap-3">
                   <CardThumb src={item.card.imageUrl} />
-                  <span className="flex-1">{cardLabel(item.card)}</span>
+                  <span className="flex flex-1 flex-col items-start gap-1">
+                    {cardLabel(item.card)}
+                    {item.poolNote && <Badge variant="secondary">{item.poolNote}</Badge>}
+                  </span>
                   <Copies
                     label={labels.cardCopies(cardLabel(item.card))}
                     hideLabel
@@ -57,6 +61,8 @@ export function NewLoanDialog() {
               ))}
             </ul>
           )}
+          {/* Kit Alerts are always role="alert"; this is information, so it's a polite status instead. */}
+          {draft.poolSummary && <p role="status">{draft.poolSummary}</p>}
           <ErrorAlert message={draft.error} />
         </div>
         <DialogFooter>
