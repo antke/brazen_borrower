@@ -4,7 +4,7 @@ import { useState } from "react"
 import { cardLabel } from "@/core/cards"
 import { labels } from "@/core/labels"
 import { useLoanDraft } from "@/core/loans"
-import { usePeopleOptions } from "@/core/people"
+import { useMemberOptions } from "@/core/people"
 import { Button } from "@/kits/keyframery/ui/button"
 import {
   Dialog,
@@ -16,10 +16,10 @@ import {
   DialogTrigger,
 } from "@/kits/keyframery/ui/dialog"
 import { CardSearch, CardThumb } from "./cards"
-import { Copies, ErrorAlert, OptionSelect } from "./fields"
+import { Copies, ErrorAlert, PartyField } from "./fields"
 
 export function NewLoanDialog() {
-  const people = usePeopleOptions()
+  const members = useMemberOptions()
   const draft = useLoanDraft()
   const [open, setOpen] = useState(false)
 
@@ -32,8 +32,8 @@ export function NewLoanDialog() {
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <OptionSelect label={labels.lender} items={people} value={draft.lender} onValueChange={draft.setLender} />
-            <OptionSelect label={labels.borrower} items={people} value={draft.borrower} onValueChange={draft.setBorrower} />
+            <PartyField label={labels.lender} options={members} value={draft.lender} onValueChange={draft.setLender} />
+            <PartyField label={labels.borrower} options={members} value={draft.borrower} onValueChange={draft.setBorrower} />
           </div>
           <CardSearch label={labels.addCard} onPick={draft.addCard} />
           {draft.items.length > 0 && (
@@ -41,7 +41,7 @@ export function NewLoanDialog() {
               {draft.items.map((item) => (
                 <li key={item.card._id} className="flex items-center gap-3">
                   <CardThumb src={item.card.imageUrl} />
-                  <span className="flex-1 text-sm">{cardLabel(item.card)}</span>
+                  <span className="flex-1">{cardLabel(item.card)}</span>
                   <Copies
                     label={labels.cardCopies(cardLabel(item.card))}
                     hideLabel

@@ -1,48 +1,68 @@
-import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
+import { v, type Infer } from "convex/values"
+import type { Doc } from "./_generated/dataModel"
+import { mutation, query, type QueryCtx } from "./_generated/server"
+import { currentUser, requireUser } from "./lib/auth"
 import { assertQuantity } from "./lib/cards"
-import { loanItem } from "./schema"
+import { cleanName, sameParty } from "./lib/parties"
+import { loanItem, partyInput } from "./schema"
+
+async function withCards(ctx: QueryCtx, loans: Doc<"loans">[]) {
+  const rows = await Promise.all(
+    loans.map(async (loan) => ({
+      ...loan,
+      items: await Promise.all(loan.items.map(async (item) => ({ ...item, card: await ctx.db.get(item.cardId) }))),
+    }))
+  )
+  return rows.sort((a, b) => b.lentAt - a.lentAt)
+}
 
 export const list = query({
+  handler: async (ctx) => withCards(ctx, await ctx.db.query("loans").collect()),
+})
+
+/** Loans the signed-in member lent or borrowed; empty when signed out. */
+export const mine = query({
   handler: async (ctx) => {
+    const user = await currentUser(ctx)
+    if (!user) return []
     const loans = await ctx.db.query("loans").collect()
-    const rows = await Promise.all(
-      loans.map(async (loan) => {
-        const [lender, borrower] = await Promise.all([ctx.db.get(loan.lenderId), ctx.db.get(loan.borrowerId)])
-        const items = await Promise.all(
-          loan.items.map(async (item) => ({ ...item, card: await ctx.db.get(item.cardId) }))
-        )
-        return {
-          ...loan,
-          lender: lender?.name ?? "Unknown",
-          borrower: borrower?.name ?? "Unknown",
-          items,
-        }
-      })
+    return withCards(
+      ctx,
+      loans.filter((l) => l.lender.userId === user._id || l.borrower.userId === user._id)
     )
-    return rows.sort((a, b) => b.lentAt - a.lentAt)
   },
 })
 
+async function resolveParty(ctx: QueryCtx, input: Infer<typeof partyInput>) {
+  if ("userId" in input) {
+    const user = await ctx.db.get(input.userId)
+    if (!user) throw new Error("Unknown member")
+    return { userId: user._id, name: user.name }
+  }
+  return { name: cleanName(input.name) }
+}
+
 export const create = mutation({
-  args: { lenderId: v.id("people"), borrowerId: v.id("people"), items: v.array(loanItem) },
-  handler: async (ctx, { lenderId, borrowerId, items }) => {
-    if (lenderId === borrowerId) throw new Error("The lender and the borrower must be different people")
-    if (items.length === 0) throw new Error("Add at least one card")
-    if (new Set(items.map((i) => i.cardId)).size !== items.length)
+  args: { lender: partyInput, borrower: partyInput, items: v.array(loanItem) },
+  handler: async (ctx, args) => {
+    await requireUser(ctx)
+    const [lender, borrower] = await Promise.all([resolveParty(ctx, args.lender), resolveParty(ctx, args.borrower)])
+    if (sameParty(lender, borrower)) throw new Error("The lender and the borrower must be different people")
+    if (args.items.length === 0) throw new Error("Add at least one card")
+    if (new Set(args.items.map((i) => i.cardId)).size !== args.items.length)
       throw new Error("Each card can only be listed once; raise its quantity instead")
-    for (const item of items) {
+    for (const item of args.items) {
       assertQuantity(item.quantity)
       if (!(await ctx.db.get(item.cardId))) throw new Error("Unknown card")
     }
-    if (!(await ctx.db.get(lenderId)) || !(await ctx.db.get(borrowerId))) throw new Error("Unknown person")
-    return ctx.db.insert("loans", { lenderId, borrowerId, items, lentAt: Date.now() })
+    return ctx.db.insert("loans", { lender, borrower, items: args.items, lentAt: Date.now() })
   },
 })
 
 export const markReturned = mutation({
   args: { id: v.id("loans") },
   handler: async (ctx, { id }) => {
+    await requireUser(ctx)
     const loan = await ctx.db.get(id)
     if (!loan) throw new Error("Unknown loan")
     if (loan.returnedAt === undefined) await ctx.db.patch(id, { returnedAt: Date.now() })

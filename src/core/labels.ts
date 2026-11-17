@@ -2,6 +2,9 @@ import { formatDate } from "./format"
 
 /** Accessible names every kit must use, so people, agents and the shared tests find the same controls. */
 export const labels = {
+  signIn: "Sign in",
+  signOut: "Sign out",
+  signInToLend: "Sign in to record a loan",
   newLoan: "New loan",
   loanDialog: "Record a loan",
   lender: "Lender",
@@ -13,16 +16,15 @@ export const labels = {
   saveLoan: "Save loan",
   outNow: "Cards out now",
   returned: "Returned loans",
-  markReturned: (loan: { lender: string; borrower: string; lentAt: number }) =>
-    `Mark returned: ${loan.lender} to ${loan.borrower}, ${formatDate(loan.lentAt)}`,
-  owner: "Owner",
-  copiesToOffer: "Copies to offer",
-  cardToOffer: "Card to offer",
+  markReturned: (loan: { lender: { name: string }; borrower: { name: string }; lentAt: number }) =>
+    `Mark returned: ${loan.lender.name} to ${loan.borrower.name}, ${formatDate(loan.lentAt)}`,
   filterPool: "Filter the pool",
   pool: "Community pool",
-  withdraw: (card: string, owner: string) => `Withdraw ${card} offered by ${owner}`,
-  personName: "Name",
-  addPerson: "Add person",
-  people: "People",
-  kit: "Interface",
+  myOffers: "My offers",
+  copiesToOffer: "Copies to offer",
+  cardToOffer: "Card to offer",
+  offeredCopies: (card: string) => `Copies of ${card} on offer`,
+  withdraw: (card: string) => `Withdraw ${card}`,
+  lentByMe: "Cards I've lent",
+  borrowedByMe: "Cards I've borrowed",
 } as const

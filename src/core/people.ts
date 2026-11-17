@@ -1,28 +1,29 @@
-import { useMutation, useQuery } from "convex/react"
-import { useState } from "react"
+import { useConvexAuth, useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
-import { errorMessage } from "./format"
+import type { Id } from "../../convex/_generated/dataModel"
 
-export function usePeople() {
-  return useQuery(api.people.list)
-}
-
-export function usePeopleOptions() {
-  return usePeople()?.map((p) => ({ value: p._id as string, label: p.name })) ?? []
-}
-
-export function useAddPerson() {
-  const add = useMutation(api.people.add)
-  const [name, setName] = useState("")
-  const [error, setError] = useState("")
-  async function submit() {
-    try {
-      await add({ name })
-      setName("")
-      setError("")
-    } catch (e) {
-      setError(errorMessage(e))
-    }
+/** Whether someone is signed in, and their member record once it's stored. */
+export function useSession() {
+  const { isAuthenticated, isLoading } = useConvexAuth()
+  const me = useQuery(api.users.me, isAuthenticated ? {} : "skip")
+  return {
+    loading: isLoading || (isAuthenticated && !me),
+    signedIn: isAuthenticated && !!me,
+    me: me ?? null,
   }
-  return { name, setName, error, submit }
+}
+
+export function useMembers() {
+  return useQuery(api.users.list)
+}
+
+/** Picker options for members; a picker's value is a member's id, or any name typed in. */
+export function useMemberOptions() {
+  return useMembers()?.map((m) => ({ value: m._id as string, label: m.name })) ?? []
+}
+
+export type PartyInput = { userId: Id<"users"> } | { name: string }
+
+export function toParty(value: string, members: { _id: string }[]): PartyInput {
+  return members.some((m) => m._id === value) ? { userId: value as Id<"users"> } : { name: value }
 }

@@ -20,18 +20,19 @@ export function toCard(raw: RiftHuntCard) {
 }
 
 export type LoanLike = {
-  lenderId: string
+  lender: { userId?: string }
   items: { cardId: string; quantity: number }[]
   returnedAt?: number
 }
 
-/** Copies of each card each person has out on loans not yet returned, keyed `${ownerId}:${cardId}`. */
+/** Copies of each card each member has out on loans not yet returned, keyed `${ownerId}:${cardId}`. */
 export function lentOut(loans: LoanLike[]) {
   const out = new Map<string, number>()
   for (const loan of loans) {
-    if (loan.returnedAt !== undefined) continue
+    // Only members have pool cards; a loan from someone outside the app can't reduce one.
+    if (loan.returnedAt !== undefined || loan.lender.userId === undefined) continue
     for (const item of loan.items) {
-      const key = `${loan.lenderId}:${item.cardId}`
+      const key = `${loan.lender.userId}:${item.cardId}`
       out.set(key, (out.get(key) ?? 0) + item.quantity)
     }
   }

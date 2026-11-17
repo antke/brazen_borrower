@@ -2,66 +2,31 @@
 
 import { formatDate } from "@/core/format"
 import { labels } from "@/core/labels"
-import { useLoans, type Loan } from "@/core/loans"
+import { useLoans, useMarkReturned, type Loan } from "@/core/loans"
+import { useSession } from "@/core/people"
 import { Button } from "@/kits/keyframery/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/kits/keyframery/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/kits/keyframery/ui/table"
-import { CardList } from "./cards"
+import { LoanTable } from "./loan-table"
 import { NewLoanDialog } from "./new-loan-dialog"
-import { PageHeader } from "./shell"
+import { PageHeader, SignIn } from "./shell"
 
-function LoanTable({
-  label,
-  loans,
-  empty,
-  last,
-}: {
-  label: string
-  loans: Loan[]
-  empty: string
-  last: { header: string; cell: (loan: Loan) => React.ReactNode }
-}) {
+export function ReturnButton({ loan }: { loan: Loan }) {
+  const markReturned = useMarkReturned()
   return (
-    <Table aria-label={label}>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Lent</TableHead>
-          <TableHead>Lender</TableHead>
-          <TableHead>Borrower</TableHead>
-          <TableHead>Cards</TableHead>
-          <TableHead>{last.header}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {loans.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={5} className="text-center text-muted-foreground">
-              {empty}
-            </TableCell>
-          </TableRow>
-        ) : (
-          loans.map((loan) => (
-            <TableRow key={loan._id}>
-              <TableCell className="whitespace-nowrap">{formatDate(loan.lentAt)}</TableCell>
-              <TableCell>{loan.lender}</TableCell>
-              <TableCell>{loan.borrower}</TableCell>
-              <TableCell>
-                <CardList items={loan.items} />
-              </TableCell>
-              <TableCell>{last.cell(loan)}</TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <Button aria-label={labels.markReturned(loan)} onClick={() => markReturned(loan)}>
+      Mark returned
+    </Button>
   )
 }
 
 export function LoansPage() {
+  const session = useSession()
   const loans = useLoans()
+  const action = session.loading ? null : session.signedIn ? <NewLoanDialog /> : <SignIn label={labels.signInToLend} />
+
   return (
     <>
-      <PageHeader title="Loans" actions={<NewLoanDialog />} />
+      <PageHeader title="Loans" actions={action} />
       <Card>
         <CardHeader>
           <CardTitle>Out now</CardTitle>
@@ -71,14 +36,7 @@ export function LoansPage() {
             label={labels.outNow}
             loans={loans.out}
             empty={loans.loading ? "Loading…" : "Nothing is out on loan."}
-            last={{
-              header: "Action",
-              cell: (loan) => (
-                <Button aria-label={labels.markReturned(loan)} onClick={() => loans.markReturned(loan)}>
-                  Mark returned
-                </Button>
-              ),
-            }}
+            extra={session.signedIn ? { header: "Action", cell: (loan) => <ReturnButton loan={loan} /> } : undefined}
           />
         </CardContent>
       </Card>
@@ -90,8 +48,8 @@ export function LoansPage() {
           <LoanTable
             label={labels.returned}
             loans={loans.returned}
-            empty="No returns yet."
-            last={{ header: "Returned", cell: (loan) => formatDate(loan.returnedAt!) }}
+            empty={loans.loading ? "Loading…" : "No returns yet."}
+            extra={{ header: "Returned", cell: (loan) => formatDate(loan.returnedAt!) }}
           />
         </CardContent>
       </Card>

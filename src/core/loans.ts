@@ -1,30 +1,48 @@
 import { useMutation, useQuery } from "convex/react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
-import type { Id } from "../../convex/_generated/dataModel"
 import type { Card } from "./cards"
 import { errorMessage } from "./format"
+import { toParty, useMembers, useSession } from "./people"
 
 export type Loan = NonNullable<ReturnType<typeof useQuery<typeof api.loans.list>>>[number]
 
+export function useMarkReturned() {
+  const markReturned = useMutation(api.loans.markReturned)
+  return (loan: Loan) => void markReturned({ id: loan._id })
+}
+
 export function useLoans() {
   const loans = useQuery(api.loans.list)
-  const markReturned = useMutation(api.loans.markReturned)
   return {
     loading: loans === undefined,
     out: loans?.filter((l) => l.returnedAt === undefined) ?? [],
     returned: loans?.filter((l) => l.returnedAt !== undefined) ?? [],
-    markReturned: (loan: Loan) => void markReturned({ id: loan._id }),
   }
 }
 
-/** A loan being recorded; `save` resolves true once it's stored, and clears the draft. */
+/** The signed-in member's loans still out: cards they lent, and cards they borrowed. */
+export function useMyLoans() {
+  const { me } = useSession()
+  const loans = useQuery(api.loans.mine)?.filter((l) => l.returnedAt === undefined)
+  return {
+    loading: loans === undefined,
+    lent: loans?.filter((l) => me && l.lender.userId === me._id) ?? [],
+    borrowed: loans?.filter((l) => me && l.borrower.userId === me._id) ?? [],
+  }
+}
+
+/** A loan being recorded; the lender starts as the signed-in member. `save` resolves true once it's stored. */
 export function useLoanDraft() {
   const create = useMutation(api.loans.create)
-  const [lender, setLender] = useState<string | null>(null)
+  const members = useMembers() ?? []
+  const { me } = useSession()
+  // undefined until the person picks someone, so the lender can default to whoever is signed in.
+  const [lenderChoice, setLender] = useState<string | null>()
   const [borrower, setBorrower] = useState<string | null>(null)
   const [items, setItems] = useState<{ card: Card; quantity: number }[]>([])
   const [error, setError] = useState("")
+  const lender = lenderChoice === undefined ? (me?._id ?? null) : lenderChoice
 
   const addCard = (card: Card) =>
     setItems((current) =>
@@ -37,17 +55,17 @@ export function useLoanDraft() {
   const removeCard = (card: Card) => setItems((current) => current.filter((i) => i.card._id !== card._id))
 
   async function save() {
-    if (!lender || !borrower) {
+    if (!lender?.trim() || !borrower?.trim()) {
       setError("Choose who lends and who borrows")
       return false
     }
     try {
       await create({
-        lenderId: lender as Id<"people">,
-        borrowerId: borrower as Id<"people">,
+        lender: toParty(lender, members),
+        borrower: toParty(borrower, members),
         items: items.map((i) => ({ cardId: i.card._id, quantity: i.quantity })),
       })
-      setLender(null)
+      setLender(undefined)
       setBorrower(null)
       setItems([])
       setError("")

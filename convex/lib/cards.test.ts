@@ -21,12 +21,13 @@ test("toCard keeps the printed number's letter suffix and upper-cases the set", 
   })
 })
 
-test("lentOut counts only unreturned loans, per lender and card", () => {
+test("lentOut counts only unreturned loans from members, per lender and card", () => {
   const out = lentOut([
-    { lenderId: "alice", items: [{ cardId: "x", quantity: 2 }, { cardId: "y", quantity: 1 }] },
-    { lenderId: "alice", items: [{ cardId: "x", quantity: 1 }] },
-    { lenderId: "bob", items: [{ cardId: "x", quantity: 3 }] },
-    { lenderId: "alice", items: [{ cardId: "x", quantity: 5 }], returnedAt: 1 },
+    { lender: { userId: "alice" }, items: [{ cardId: "x", quantity: 2 }, { cardId: "y", quantity: 1 }] },
+    { lender: { userId: "alice" }, items: [{ cardId: "x", quantity: 1 }] },
+    { lender: { userId: "bob" }, items: [{ cardId: "x", quantity: 3 }] },
+    { lender: { userId: "alice" }, items: [{ cardId: "x", quantity: 5 }], returnedAt: 1 },
+    { lender: {}, items: [{ cardId: "x", quantity: 4 }] },
   ])
   expect(out.get("alice:x")).toBe(3)
   expect(out.get("alice:y")).toBe(1)

@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs"
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import type { ReactNode } from "react"
@@ -16,9 +17,11 @@ export default function KeyframeryLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" className={geist.className}>
       <body className="min-h-dvh antialiased">
-        <Providers>
-          <Shell>{children}</Shell>
-        </Providers>
+        <ClerkProvider>
+          <Providers>
+            <Shell>{children}</Shell>
+          </Providers>
+        </ClerkProvider>
       </body>
     </html>
   )
