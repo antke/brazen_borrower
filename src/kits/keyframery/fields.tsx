@@ -13,6 +13,7 @@ import {
 } from "@/kits/keyframery/ui/combobox"
 import { Empty, EmptyHeader, EmptyTitle } from "@/kits/keyframery/ui/empty"
 import { Field, FieldLabel } from "@/kits/keyframery/ui/field"
+import { Item, ItemContent, ItemDescription } from "@/kits/keyframery/ui/item"
 import {
   NumberInput,
   NumberInputControl,
@@ -73,7 +74,8 @@ export function Copies({
   onValueChange: (value: number) => void
 }) {
   return (
-    <Field>
+    // Two digits never need more room; a stepper stretched to its column reads as a slider.
+    <Field className="w-32 shrink-0">
       <FieldLabel className={hideLabel ? "sr-only" : undefined}>{label}</FieldLabel>
       <NumberInput value={value} onValueChange={(v) => v !== null && onValueChange(v)} min={1} max={99}>
         <NumberInputGroup>
@@ -92,6 +94,17 @@ export function ErrorAlert({ message }: { message: string }) {
       <AlertDescription>{message}</AlertDescription>
     </Alert>
   ) : null
+}
+
+/** A quiet one-line "nothing here" for a list inside a card; EmptyState is for a whole page. */
+export function EmptyNote({ children }: { children: React.ReactNode }) {
+  return (
+    <Item variant="muted" size="sm">
+      <ItemContent>
+        <ItemDescription>{children}</ItemDescription>
+      </ItemContent>
+    </Item>
+  )
 }
 
 export function EmptyState({ title, children }: { title: string; children?: React.ReactNode }) {

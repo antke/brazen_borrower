@@ -8,8 +8,8 @@ import { useMyOffers } from "@/core/pool"
 import { Button } from "@/kits/keyframery/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/kits/keyframery/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/kits/keyframery/ui/table"
-import { CardSearch, CardThumb } from "./cards"
-import { Copies, EmptyState, ErrorAlert } from "./fields"
+import { CardCell, CardSearch } from "./cards"
+import { Copies, EmptyNote, EmptyState, ErrorAlert } from "./fields"
 import { LoanTable } from "./loan-table"
 import { ReturnButton } from "./loans-page"
 import { PageHeader, SignIn } from "./shell"
@@ -28,7 +28,7 @@ function MyOffers() {
         </div>
         <ErrorAlert message={offers.error} />
         {offers.rows.length === 0 ? (
-          <EmptyState title={offers.loading ? "Loading…" : "Your collection is empty. Add a card above."} />
+          <EmptyNote>{offers.loading ? "Loading…" : "Your collection is empty. Add a card above."}</EmptyNote>
         ) : (
           <Table aria-label={labels.myOffers}>
             <TableHeader>
@@ -46,10 +46,7 @@ function MyOffers() {
                 return (
                   <TableRow key={row._id}>
                     <TableCell>
-                      <span className="flex items-center gap-2">
-                        {row.card && <CardThumb src={row.card.imageUrl} />}
-                        {name}
-                      </span>
+                      {row.card ? <CardCell card={row.card} /> : name}
                     </TableCell>
                     <TableCell>
                       <Copies
@@ -81,24 +78,29 @@ function MyLoans() {
   const loans = useMyLoans()
   const loading = loans.loading ? "Loading…" : undefined
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>My loans</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <LoanTable
-          label={labels.lentByMe}
-          loans={loans.lent}
-          empty={loading ?? "You haven't lent any cards out."}
-          extra={{ header: "Action", cell: (loan) => <ReturnButton loan={loan} /> }}
-        />
-        <LoanTable
-          label={labels.borrowedByMe}
-          loans={loans.borrowed}
-          empty={loading ?? "You aren't borrowing any cards."}
-        />
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{labels.lentByMe}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LoanTable
+            label={labels.lentByMe}
+            loans={loans.lent}
+            empty={loading ?? "You haven't lent any cards out."}
+            extra={{ header: "Action", cell: (loan) => <ReturnButton loan={loan} /> }}
+          />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{labels.borrowedByMe}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LoanTable label={labels.borrowedByMe} loans={loans.borrowed} empty={loading ?? "You aren't borrowing any cards."} />
+        </CardContent>
+      </Card>
+    </>
   )
 }
 

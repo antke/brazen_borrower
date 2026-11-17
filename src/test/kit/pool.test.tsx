@@ -23,7 +23,8 @@ describe.each(kitCases)("%s kit: shared collection", (_, { PoolPage }) => {
     const result = await agent.act({ steps: [{ ref: labels.filterPool, action: "setValue", args: ["bob"] }] })
     expect(result.ok, result.error?.message).toBe(true)
     const table = screen.getByRole("table", { name: labels.pool })
-    expect(table.textContent).toContain("Fury Rune · OGN 007")
+    expect(table.textContent).toContain("Fury Rune")
+    expect(table.textContent).toContain("OGN 007")
     expect(table.textContent).not.toContain("Pouty Poro")
   })
 

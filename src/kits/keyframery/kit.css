@@ -83,6 +83,17 @@
   }
 }
 
+/* Dialogs soften the page behind them as well as dimming it, so the open task reads as the only thing in play. */
+[data-slot="dialog-backdrop"] {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* An item inside a table cell (a card's art and name) already has the cell's padding around it. */
+td [data-slot="item"] {
+  --item-padding: 0px;
+}
+
 /* Keyframery motion styles, from its registry's `motion` item. */
 @layer base {
   :root {

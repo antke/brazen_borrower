@@ -5,7 +5,7 @@ import { formatDate } from "@/core/format"
 import type { Loan } from "@/core/loans"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/kits/keyframery/ui/table"
 import { CardList } from "./cards"
-import { EmptyState } from "./fields"
+import { EmptyNote } from "./fields"
 
 export function LoanTable({
   label,
@@ -18,7 +18,7 @@ export function LoanTable({
   empty: string
   extra?: { header: string; cell: (loan: Loan) => ReactNode }
 }) {
-  if (loans.length === 0) return <EmptyState title={empty} />
+  if (loans.length === 0) return <EmptyNote>{empty}</EmptyNote>
   return (
     <Table aria-label={label}>
       <TableHeader>

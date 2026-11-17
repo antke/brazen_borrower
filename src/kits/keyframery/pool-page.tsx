@@ -1,14 +1,13 @@
 "use client"
 
-import { cardLabel } from "@/core/cards"
 import { labels } from "@/core/labels"
 import { usePool } from "@/core/pool"
 import { Card, CardContent, CardHeader, CardTitle } from "@/kits/keyframery/ui/card"
 import { Field, FieldLabel } from "@/kits/keyframery/ui/field"
 import { Input } from "@/kits/keyframery/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/kits/keyframery/ui/table"
-import { CardThumb } from "./cards"
-import { EmptyState } from "./fields"
+import { CardCell } from "./cards"
+import { EmptyNote } from "./fields"
 import { PageHeader } from "./shell"
 
 export function PoolPage() {
@@ -27,9 +26,9 @@ export function PoolPage() {
             <Input value={pool.filter} onValueChange={pool.setFilter} placeholder="Card or owner" />
           </Field>
           {pool.rows.length === 0 ? (
-            <EmptyState
-              title={pool.loading ? "Loading…" : pool.filter ? "Nothing matches that filter." : "Nobody has added cards yet."}
-            />
+            <EmptyNote>
+              {pool.loading ? "Loading…" : pool.filter ? "Nothing matches that filter." : "Nobody has added cards yet."}
+            </EmptyNote>
           ) : (
             <Table aria-label={labels.pool}>
               <TableHeader>
@@ -45,10 +44,7 @@ export function PoolPage() {
                 {pool.rows.map((row) => (
                   <TableRow key={row._id}>
                     <TableCell>
-                      <span className="flex items-center gap-2">
-                        {row.card && <CardThumb src={row.card.imageUrl} />}
-                        {row.card ? cardLabel(row.card) : "Unknown card"}
-                      </span>
+                      {row.card ? <CardCell card={row.card} /> : "Unknown card"}
                     </TableCell>
                     <TableCell>{row.owner}</TableCell>
                     <TableCell>{row.quantity}</TableCell>
