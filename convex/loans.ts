@@ -6,7 +6,7 @@ import { assertQuantity } from "./lib/cards"
 import { cleanName, sameParty } from "./lib/parties"
 import { loanItem, partyInput } from "./schema"
 
-/** A member's current name (they can rename themselves); anyone else keeps the name typed in. */
+/** A member's current name (it follows their Clerk username); anyone else keeps the name typed in. */
 async function liveName(ctx: QueryCtx, party: Doc<"loans">["lender"]) {
   if (!party.userId) return party
   return { ...party, name: (await ctx.db.get(party.userId))?.name ?? party.name }

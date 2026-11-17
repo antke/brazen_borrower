@@ -47,19 +47,6 @@ describe.each(kitCases)("%s kit: me", (_, { MePage }) => {
       expect(e.label, `${e.component} ${e.ref} has no name`).toBeTruthy()
   })
 
-  test("an agent changes the member's display name", async () => {
-    render(<MePage />)
-    expect(screen.getByRole("textbox", { name: labels.displayName })).toHaveProperty("value", "Alice")
-    const result = await agent.act({
-      steps: [
-        { ref: labels.displayName, action: "setValue", args: ["Antek"] },
-        { ref: labels.saveName, action: "press" },
-      ],
-    })
-    expect(result.ok, result.error?.message).toBe(true)
-    expect(mutations["users:rename"]).toHaveBeenCalledWith({ name: "Antek" })
-  })
-
   test("the member sees what they lent and what they borrowed", () => {
     render(<MePage />)
     expect(screen.getByRole("table", { name: labels.lentByMe }).textContent).toContain("Uncle Joe")

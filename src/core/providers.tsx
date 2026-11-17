@@ -2,7 +2,7 @@
 
 import { useAuth, useUser } from "@clerk/nextjs"
 import { createAgent, registerTools } from "@ui-sdk/react/agent"
-import { ConvexReactClient, useConvexAuth, useMutation } from "convex/react"
+import { ConvexReactClient, useAction, useConvexAuth } from "convex/react"
 import { ConvexProviderWithClerk } from "convex/react-clerk"
 import { useEffect, type ReactNode } from "react"
 import { api } from "../../convex/_generated/api"
@@ -10,14 +10,14 @@ import { api } from "../../convex/_generated/api"
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 const agent = createAgent()
 
-/** Saves the signed-in Clerk user as a member, so they can own cards and be picked in loans. */
+/** Saves the signed-in Clerk user as a member under their Clerk username, on every visit. */
 function StoreUser() {
   const { isAuthenticated } = useConvexAuth()
   const { user } = useUser()
-  const store = useMutation(api.users.store)
+  const store = useAction(api.users.store)
   useEffect(() => {
     if (isAuthenticated) void store()
-  }, [isAuthenticated, store, user?.id])
+  }, [isAuthenticated, store, user?.id, user?.username])
   return null
 }
 
