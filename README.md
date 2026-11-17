@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Riftbound card pool
 
-## Getting Started
+Tracks who lent which Riftbound cards to whom, and the cards friends offer to lend.
+Next.js 16, Convex, and UI SDK for every control. Card data comes from RiftHunt's bulk export, synced daily.
 
-First, run the development server:
+## Run it
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```sh
+pnpm exec convex dev   # local backend, no account needed
+pnpm dev               # http://localhost:3333
+pnpm test              # every test runs against every kit
 ```
 
-Open [http://localhost:3333](http://localhost:3333) with your browser to see the result.
+## Layout
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `convex/`: the backend.
+- `src/core/`: everything kits share: hooks, rules, card search, and `labels.ts`, the accessible names every kit must use.
+- `src/kits/<kit>/`: one complete interface. `ui/` is vendored from the kit's shadcn registry and kept as published.
+- `src/app/(<kit>)/`: that kit's root layout and one-line routes under `/<kit>/…`.
+- `src/proxy.ts`: serves the kit chosen by the `kit` cookie at the shared URLs (`/pool` → `/keyframery/pool`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Lint enforces the boundaries: `src/core` can't import a kit, a kit can't import another kit, and nothing but UI SDK provides behaviour.
 
-## Learn More
+## Adding a kit
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Add its name to `kits` in `src/core/kit.ts` and in `eslint.config.mjs`.
+2. Skip its folder in the matcher in `src/proxy.ts`.
+3. Build `src/kits/<kit>/` and `src/app/(<kit>)/<kit>/` with the same three pages, using `labels` for every control.
+4. List its pages in `src/test/kit/kits.ts`; the shared tests then run against it.
