@@ -33,23 +33,27 @@ export function useMyLoans() {
   }
 }
 
-/** A short mark for a card whose loan will change the lender's pool. */
-export function poolNote(owner: string, change: { from: number; to: number }) {
-  return change.from === 0 ? `Adds ${change.to} to ${owner}'s pool` : `${owner}'s pool ${change.from} → ${change.to}`
+/** A short mark for a card that saving will add to (or top up in) your pool. */
+export function poolNote(change: { from: number; to: number }) {
+  return change.from === 0 ? "New to your pool" : `Your pool: ${change.from} → ${change.to}`
 }
 
-/** A loan being recorded; the lender starts as the signed-in member. `save` resolves true once it's stored. */
+export function poolSummary(count: number) {
+  if (count === 0) return ""
+  return count === 1
+    ? "Heads up: one of these isn't in your pool yet, so we'll add it when you save."
+    : "Heads up: some of these aren't in your pool yet, so we'll add them when you save."
+}
+
+/** A loan you're recording: always from you, to a member or anyone you type in. `save` resolves true once it's stored. */
 export function useLoanDraft() {
   const create = useMutation(api.loans.create)
   const members = useMembers() ?? []
   const { me } = useSession()
-  // undefined until the person picks someone, so the lender can default to whoever is signed in.
-  const [lenderChoice, setLender] = useState<string | null>()
   const [borrower, setBorrower] = useState<string | null>(null)
   const [items, setItems] = useState<{ card: Card; quantity: number }[]>([])
   const [error, setError] = useState("")
   const pool = useQuery(api.pool.list)
-  const lender = lenderChoice === undefined ? (me?._id ?? null) : lenderChoice
 
   const addCard = (card: Card) =>
     setItems((current) =>
@@ -62,22 +66,17 @@ export function useLoanDraft() {
   const removeCard = (card: Card) => setItems((current) => current.filter((i) => i.card._id !== card._id))
 
   async function save() {
-    if (!lender?.trim() || !borrower?.trim()) {
-      setError("Choose who lends and who borrows")
+    if (!borrower?.trim()) {
+      setError("Who's borrowing? Pick someone or type a name")
       return false
     }
-    const [lenderParty, borrowerParty] = [toParty(lender, members), toParty(borrower, members)]
-    if (sameParty(lenderParty, borrowerParty)) {
-      setError("The lender and the borrower must be different people")
+    const borrowerParty = toParty(borrower, members)
+    if (me && sameParty({ userId: me._id }, borrowerParty)) {
+      setError("You can't lend cards to yourself")
       return false
     }
     try {
-      await create({
-        lender: lenderParty,
-        borrower: borrowerParty,
-        items: items.map((i) => ({ cardId: i.card._id, quantity: i.quantity })),
-      })
-      setLender(undefined)
+      await create({ borrower: borrowerParty, items: items.map((i) => ({ cardId: i.card._id, quantity: i.quantity })) })
       setBorrower(null)
       setItems([])
       setError("")
@@ -88,34 +87,21 @@ export function useLoanDraft() {
     }
   }
 
-  // Each picker leaves out whoever the other side already is.
-  const options = (other: string | null) =>
-    members.filter((m) => m._id !== other).map((m) => ({ value: m._id as string, label: m.name }))
-
-  // What saving will add to a member lender's pool, worked out the same way the server does it.
-  const lenderParty = lender?.trim() ? toParty(lender, members) : null
-  const lenderMember = lenderParty && "userId" in lenderParty ? members.find((m) => m._id === lenderParty.userId) : undefined
-  const offers = new Map(pool?.filter((r) => r.ownerId === lenderMember?._id).map((r) => [r.cardId as string, r]))
-  const withPoolChanges = items.map((item) => {
+  // What saving will add to your pool, worked out the same way the server does it.
+  const offers = new Map(pool?.filter((r) => r.ownerId === me?._id).map((r) => [r.cardId as string, r]))
+  const withPoolNotes = items.map((item) => {
     const offer = offers.get(item.card._id)
-    const change = lenderMember
-      ? poolTopUp({ cardId: item.card._id, quantity: item.quantity }, { offered: offer?.quantity, lent: offer?.lent ?? 0 })
-      : null
-    return { ...item, poolNote: change && poolNote(lenderMember!.name, change) }
+    const change = poolTopUp({ cardId: item.card._id, quantity: item.quantity }, { offered: offer?.quantity, lent: offer?.lent ?? 0 })
+    return { ...item, poolNote: change && poolNote(change) }
   })
-  const added = withPoolChanges.filter((i) => i.poolNote).length
 
   return {
-    lender,
-    setLender,
-    lenderOptions: options(borrower),
     borrower,
     setBorrower,
-    borrowerOptions: options(lender),
-    items: withPoolChanges,
-    poolSummary: added
-      ? `${added === 1 ? "1 card isn't" : `${added} cards aren't`} fully in ${lenderMember!.name}'s pool. Saving adds ${added === 1 ? "it" : "them"} there.`
-      : "",
+    // You're always the lender, so you're never offered as the borrower.
+    borrowerOptions: members.filter((m) => m._id !== me?._id).map((m) => ({ value: m._id as string, label: m.name })),
+    items: withPoolNotes,
+    poolSummary: poolSummary(withPoolNotes.filter((i) => i.poolNote).length),
     addCard,
     setQuantity,
     removeCard,

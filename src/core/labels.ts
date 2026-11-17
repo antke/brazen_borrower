@@ -7,7 +7,6 @@ export const labels = {
   signInToLend: "Sign in to record a loan",
   newLoan: "New loan",
   loanDialog: "Record a loan",
-  lender: "Lender",
   borrower: "Borrower",
   addCard: "Add a card",
   loanCards: "Cards in this loan",

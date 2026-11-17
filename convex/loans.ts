@@ -51,11 +51,13 @@ async function resolveParty(ctx: QueryCtx, input: Infer<typeof partyInput>) {
 }
 
 export const create = mutation({
-  args: { lender: partyInput, borrower: partyInput, items: v.array(loanItem) },
+  args: { borrower: partyInput, items: v.array(loanItem) },
   handler: async (ctx, args) => {
-    await requireUser(ctx)
-    const [lender, borrower] = await Promise.all([resolveParty(ctx, args.lender), resolveParty(ctx, args.borrower)])
-    if (sameParty(lender, borrower)) throw new Error("The lender and the borrower must be different people")
+    // You can only lend your own cards: the lender is always whoever is signed in.
+    const me = await requireUser(ctx)
+    const lender = { userId: me._id, name: me.name }
+    const borrower = await resolveParty(ctx, args.borrower)
+    if (sameParty(lender, borrower)) throw new Error("You can't lend cards to yourself")
     if (args.items.length === 0) throw new Error("Add at least one card")
     if (new Set(args.items.map((i) => i.cardId)).size !== args.items.length)
       throw new Error("Each card can only be listed once; raise its quantity instead")
@@ -63,20 +65,17 @@ export const create = mutation({
       assertQuantity(item.quantity)
       if (!(await ctx.db.get(item.cardId))) throw new Error("Unknown card")
     }
-    if (lender.userId) {
-      const ownerId = lender.userId
-      // Lending a card means having it: add it to the lender's pool, or raise their offer to cover it.
-      const out = lentOut(await ctx.db.query("loans").collect())
-      for (const item of args.items) {
-        const offer = await ctx.db
-          .query("pool")
-          .withIndex("by_owner_card", (q) => q.eq("ownerId", ownerId).eq("cardId", item.cardId))
-          .unique()
-        const change = poolTopUp(item, { offered: offer?.quantity, lent: out.get(`${ownerId}:${item.cardId}`) ?? 0 })
-        if (!change) continue
-        if (offer) await ctx.db.patch(offer._id, { quantity: change.to })
-        else await ctx.db.insert("pool", { ownerId, cardId: item.cardId, quantity: change.to })
-      }
+    // Lending a card means having it: add it to your pool, or raise your offer to cover it.
+    const out = lentOut(await ctx.db.query("loans").collect())
+    for (const item of args.items) {
+      const offer = await ctx.db
+        .query("pool")
+        .withIndex("by_owner_card", (q) => q.eq("ownerId", me._id).eq("cardId", item.cardId))
+        .unique()
+      const change = poolTopUp(item, { offered: offer?.quantity, lent: out.get(`${me._id}:${item.cardId}`) ?? 0 })
+      if (!change) continue
+      if (offer) await ctx.db.patch(offer._id, { quantity: change.to })
+      else await ctx.db.insert("pool", { ownerId: me._id, cardId: item.cardId, quantity: change.to })
     }
     return ctx.db.insert("loans", { lender, borrower, items: args.items, lentAt: Date.now() })
   },

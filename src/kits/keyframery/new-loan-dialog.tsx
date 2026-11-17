@@ -30,10 +30,7 @@ export function NewLoanDialog() {
           <DialogTitle>{labels.loanDialog}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <PartyField label={labels.lender} options={draft.lenderOptions} value={draft.lender} onValueChange={draft.setLender} />
-            <PartyField label={labels.borrower} options={draft.borrowerOptions} value={draft.borrower} onValueChange={draft.setBorrower} />
-          </div>
+          <PartyField label={labels.borrower} options={draft.borrowerOptions} value={draft.borrower} onValueChange={draft.setBorrower} />
           <CardSearch label={labels.addCard} onPick={draft.addCard} />
           {draft.items.length > 0 && (
             <ul aria-label={labels.loanCards} className="flex flex-col gap-2">
