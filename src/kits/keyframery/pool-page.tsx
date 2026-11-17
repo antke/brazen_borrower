@@ -16,10 +16,10 @@ export function PoolPage() {
 
   return (
     <>
-      <PageHeader title="Community pool" />
+      <PageHeader title="Shared collection" />
       <Card>
         <CardHeader>
-          <CardTitle>Cards on offer</CardTitle>
+          <CardTitle>{"Everyone's cards"}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Field className="max-w-sm">
@@ -28,7 +28,7 @@ export function PoolPage() {
           </Field>
           {pool.rows.length === 0 ? (
             <EmptyState
-              title={pool.loading ? "Loading…" : pool.filter ? "Nothing matches that filter." : "No cards offered yet."}
+              title={pool.loading ? "Loading…" : pool.filter ? "Nothing matches that filter." : "Nobody has added cards yet."}
             />
           ) : (
             <Table aria-label={labels.pool}>
@@ -36,7 +36,7 @@ export function PoolPage() {
                 <TableRow>
                   <TableHead>Card</TableHead>
                   <TableHead>Owner</TableHead>
-                  <TableHead>Offered</TableHead>
+                  <TableHead>Copies</TableHead>
                   <TableHead>Lent out</TableHead>
                   <TableHead>Available</TableHead>
                 </TableRow>

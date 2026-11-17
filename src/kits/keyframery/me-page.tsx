@@ -28,7 +28,7 @@ function MyOffers() {
         </div>
         <ErrorAlert message={offers.error} />
         {offers.rows.length === 0 ? (
-          <EmptyState title={offers.loading ? "Loading…" : "You aren't offering any cards yet."} />
+          <EmptyState title={offers.loading ? "Loading…" : "Your collection is empty. Add a card above."} />
         ) : (
           <Table aria-label={labels.myOffers}>
             <TableHeader>
@@ -63,7 +63,7 @@ function MyOffers() {
                     <TableCell>{row.available}</TableCell>
                     <TableCell>
                       <Button variant="ghost" aria-label={labels.withdraw(name)} onClick={() => void offers.withdraw(row)}>
-                        Withdraw
+                        Remove
                       </Button>
                     </TableCell>
                   </TableRow>

@@ -81,7 +81,7 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     expect(mutations["loans:create"]).not.toHaveBeenCalled()
   })
 
-  test("cards that aren't in your pool are marked before saving", async () => {
+  test("cards that aren't in your collection are marked before saving", async () => {
     queries["pool:list"] = [
       { _id: "e2", ownerId: "u1", cardId: "c2", quantity: 1, owner: "Alice", card: catalogue[1], lent: 1, available: 0 },
     ]
@@ -98,12 +98,12 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     })
     expect(result.ok, result.error?.message).toBe(true)
     const cards = screen.getByRole("list", { name: labels.loanCards }).textContent
-    expect(cards).toContain("New to your pool")
-    expect(cards).toContain("Your pool: 1 → 2")
-    expect(screen.getByRole("status").textContent).toBe("Heads up: some of these aren't in your pool yet, so we'll add them when you save.")
+    expect(cards).toContain("New to your collection")
+    expect(cards).toContain("Your collection: 1 → 2")
+    expect(screen.getByRole("status").textContent).toBe("Heads up: some of these aren't in your collection yet, so we'll add them when you save.")
 
     await agent.act({ steps: [{ ref: labels.removeCard("Blazing Scorcher · OGN 001"), action: "press" }] })
-    expect(screen.getByRole("status").textContent).toBe("Heads up: one of these isn't in your pool yet, so we'll add it when you save.")
+    expect(screen.getByRole("status").textContent).toBe("Heads up: one of these isn't in your collection yet, so we'll add it when you save.")
     queries["pool:list"] = []
   })
 

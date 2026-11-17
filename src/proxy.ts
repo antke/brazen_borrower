@@ -2,7 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import { kitCookie, kits, readKit } from "@/core/kit"
 
-/** Runs Clerk on every request, then serves the chosen kit's version of a page at the same URL: /pool → /keyframery/pool. */
+/** Runs Clerk on every request, then serves the chosen kit's version of a page at the same URL: /shared → /keyframery/shared. */
 export default clerkMiddleware((_auth, request) => {
   const { pathname, search } = request.nextUrl
   if (kits.some((kit) => pathname === `/${kit}` || pathname.startsWith(`/${kit}/`))) return

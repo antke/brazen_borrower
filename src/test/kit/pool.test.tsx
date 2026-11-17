@@ -16,8 +16,8 @@ beforeEach(() => {
   ]
 })
 
-describe.each(kitCases)("%s kit: pool", (_, { PoolPage }) => {
-  test("the pool is read-only, and an agent can filter it", async () => {
+describe.each(kitCases)("%s kit: shared collection", (_, { PoolPage }) => {
+  test("the shared collection is read-only, and an agent can filter it", async () => {
     render(<PoolPage />)
     expect(screen.queryAllByRole("button")).toHaveLength(0)
     const result = await agent.act({ steps: [{ ref: labels.filterPool, action: "setValue", args: ["bob"] }] })
@@ -27,9 +27,9 @@ describe.each(kitCases)("%s kit: pool", (_, { PoolPage }) => {
     expect(table.textContent).not.toContain("Pouty Poro")
   })
 
-  test("an empty pool says so", () => {
+  test("an empty shared collection says so", () => {
     queries["pool:list"] = []
     render(<PoolPage />)
-    expect(screen.getByText("No cards offered yet.")).toBeTruthy()
+    expect(screen.getByText("Nobody has added cards yet.")).toBeTruthy()
   })
 })

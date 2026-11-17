@@ -10,7 +10,7 @@ import { Button } from "@/kits/keyframery/ui/button"
 
 const links = [
   { href: "/", label: "Loans" },
-  { href: "/pool", label: "Pool" },
+  { href: "/shared", label: "Shared collection" },
   { href: "/me", label: "Me" },
 ]
 

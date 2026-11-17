@@ -28,7 +28,7 @@ beforeEach(() => {
 })
 
 describe.each(kitCases)("%s kit: me", (_, { MePage }) => {
-  test("an agent offers, recounts and withdraws the member's own cards", async () => {
+  test("an agent adds to, recounts and removes from the member's collection", async () => {
     render(<MePage />)
     const result = await agent.act({
       steps: [

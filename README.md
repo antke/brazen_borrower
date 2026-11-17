@@ -17,7 +17,7 @@ pnpm test              # every test runs against every kit
 - `src/core/`: everything kits share: hooks, rules, card search, and `labels.ts`, the accessible names every kit must use.
 - `src/kits/<kit>/`: one complete interface. `ui/` is vendored from the kit's shadcn registry and kept as published.
 - `src/app/(<kit>)/`: that kit's root layout and one-line routes under `/<kit>/…`.
-- `src/proxy.ts`: serves the kit chosen by the `kit` cookie at the shared URLs (`/pool` → `/keyframery/pool`).
+- `src/proxy.ts`: serves the kit chosen by the `kit` cookie at the shared URLs (`/shared` → `/keyframery/shared`).
 
 Lint enforces the boundaries: `src/core` can't import a kit, a kit can't import another kit, and nothing but UI SDK provides behaviour.
 

@@ -33,16 +33,16 @@ export function useMyLoans() {
   }
 }
 
-/** A short mark for a card that saving will add to (or top up in) your pool. */
+/** A short mark for a card that saving will add to (or top up in) your collection. */
 export function poolNote(change: { from: number; to: number }) {
-  return change.from === 0 ? "New to your pool" : `Your pool: ${change.from} → ${change.to}`
+  return change.from === 0 ? "New to your collection" : `Your collection: ${change.from} → ${change.to}`
 }
 
 export function poolSummary(count: number) {
   if (count === 0) return ""
   return count === 1
-    ? "Heads up: one of these isn't in your pool yet, so we'll add it when you save."
-    : "Heads up: some of these aren't in your pool yet, so we'll add them when you save."
+    ? "Heads up: one of these isn't in your collection yet, so we'll add it when you save."
+    : "Heads up: some of these aren't in your collection yet, so we'll add them when you save."
 }
 
 /** A loan you're recording: always from you, to a member or anyone you type in. `save` resolves true once it's stored. */
