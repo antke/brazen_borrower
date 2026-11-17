@@ -6,10 +6,18 @@ import { assertQuantity } from "./lib/cards"
 import { cleanName, sameParty } from "./lib/parties"
 import { loanItem, partyInput } from "./schema"
 
+/** A member's current name (they can rename themselves); anyone else keeps the name typed in. */
+async function liveName(ctx: QueryCtx, party: Doc<"loans">["lender"]) {
+  if (!party.userId) return party
+  return { ...party, name: (await ctx.db.get(party.userId))?.name ?? party.name }
+}
+
 async function withCards(ctx: QueryCtx, loans: Doc<"loans">[]) {
   const rows = await Promise.all(
     loans.map(async (loan) => ({
       ...loan,
+      lender: await liveName(ctx, loan.lender),
+      borrower: await liveName(ctx, loan.borrower),
       items: await Promise.all(loan.items.map(async (item) => ({ ...item, card: await ctx.db.get(item.cardId) }))),
     }))
   )

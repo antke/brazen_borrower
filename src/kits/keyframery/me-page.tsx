@@ -3,16 +3,42 @@
 import { cardLabel } from "@/core/cards"
 import { labels } from "@/core/labels"
 import { useMyLoans } from "@/core/loans"
-import { useSession } from "@/core/people"
+import { useDisplayName, useSession } from "@/core/people"
 import { useMyOffers } from "@/core/pool"
 import { Button } from "@/kits/keyframery/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/kits/keyframery/ui/card"
+import { Field, FieldLabel } from "@/kits/keyframery/ui/field"
+import { Input } from "@/kits/keyframery/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/kits/keyframery/ui/table"
 import { CardSearch, CardThumb } from "./cards"
 import { Copies, EmptyState, ErrorAlert } from "./fields"
 import { LoanTable } from "./loan-table"
 import { ReturnButton } from "./loans-page"
 import { PageHeader, SignIn } from "./shell"
+
+function DisplayName() {
+  const name = useDisplayName()
+  return (
+    <>
+      <form
+        className="flex max-w-md items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void name.save()
+        }}
+      >
+        <Field className="flex-1">
+          <FieldLabel>{labels.displayName}</FieldLabel>
+          <Input value={name.name} onValueChange={name.setName} />
+        </Field>
+        <Button type="submit" variant="primary" disabled={!name.changed}>
+          {labels.saveName}
+        </Button>
+      </form>
+      <ErrorAlert message={name.error} />
+    </>
+  )
+}
 
 function MyOffers() {
   const offers = useMyOffers()
@@ -114,6 +140,7 @@ export function MePage() {
   return (
     <>
       <PageHeader title={session.me?.name ?? "Me"} />
+      <DisplayName />
       <MyOffers />
       <MyLoans />
     </>

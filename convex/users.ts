@@ -1,18 +1,26 @@
+import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
-import { currentUser } from "./lib/auth"
+import { currentUser, requireUser } from "./lib/auth"
+import { cleanName } from "./lib/parties"
 
-/** Saves the signed-in Clerk user as a member, or refreshes their name. Called once per sign-in. */
+/** Saves the signed-in Clerk user as a member on first sign-in; later sign-ins leave their chosen name alone. */
 export const store = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error("Sign in first")
-    const name = (identity.name ?? identity.nickname ?? identity.email ?? "Member").slice(0, 40)
     const user = await currentUser(ctx)
-    if (user) {
-      if (user.name !== name) await ctx.db.patch(user._id, { name })
-      return user._id
-    }
+    if (user) return user._id
+    // Not the email: member names are shown to everyone, signed in or not.
+    const name = (identity.name ?? identity.nickname ?? "Member").slice(0, 40)
     return ctx.db.insert("users", { name, tokenIdentifier: identity.tokenIdentifier })
+  },
+})
+
+export const rename = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx)
+    await ctx.db.patch(user._id, { name: cleanName(args.name) })
   },
 })
 

@@ -25,6 +25,8 @@ export const labels = {
   cardToOffer: "Card to offer",
   offeredCopies: (card: string) => `Copies of ${card} on offer`,
   withdraw: (card: string) => `Withdraw ${card}`,
+  displayName: "Display name",
+  saveName: "Save name",
   lentByMe: "Cards I've lent",
   borrowedByMe: "Cards I've borrowed",
 } as const
