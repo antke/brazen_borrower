@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AgentBridge } from "./agent-bridge";
 import { ConvexClientProvider } from "./convex-provider";
+import { Nav } from "@/components/nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UI SDK playground",
-  description: "Next.js + Convex + UI SDK test app",
+  title: "Riftbound card pool",
+  description: "Who has whose Riftbound cards.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -26,7 +27,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-white font-sans text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider>
+          <header className="border-b border-neutral-200 dark:border-neutral-800">
+            <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3">
+              <span className="font-semibold">Riftbound card pool</span>
+              <Nav />
+            </div>
+          </header>
+          <main className="mx-auto w-full max-w-5xl px-4 py-8">{children}</main>
+        </ConvexClientProvider>
         <AgentBridge />
       </body>
     </html>

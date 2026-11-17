@@ -1,5 +1,9 @@
 import { cleanup } from "@testing-library/react"
-import { afterEach } from "vitest"
+import { createElement } from "react"
+import { afterEach, vi } from "vitest"
+
+// next/image needs the Next server to optimise; a plain img is enough in jsdom.
+vi.mock("next/image", () => ({ default: (props: object) => createElement("img", props) }))
 
 declare global {
   var __UI_SDK_STRICT__: boolean | undefined

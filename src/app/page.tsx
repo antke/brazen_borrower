@@ -1,107 +1,67 @@
 "use client"
 
-import { useState } from "react"
 import { useMutation, useQuery } from "convex/react"
-import { Button } from "@ui-sdk/react/button"
-import { Field, FieldLabel } from "@ui-sdk/react/field"
-import { Input } from "@ui-sdk/react/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectItemIndicator,
-  SelectTrigger,
-  SelectValue,
-} from "@ui-sdk/react/select"
-import { CheckIcon, ChevronDownIcon } from "lucide-react"
 import { api } from "../../convex/_generated/api"
-import type { Doc } from "../../convex/_generated/dataModel"
+import { CardList } from "@/components/card-search"
+import { NewLoanDialog } from "@/components/new-loan-dialog"
+import { Button } from "@/components/ui/button"
+import { DataTable, type Column } from "@/components/ui/data-table"
 
-type Status = Doc<"tasks">["status"]
+type Loan = NonNullable<ReturnType<typeof useQuery<typeof api.loans.list>>>[number]
 
-const statuses: { value: Status; label: string }[] = [
-  { value: "todo", label: "To do" },
-  { value: "doing", label: "Doing" },
-  { value: "done", label: "Done" },
-]
+const date = (ms: number) => new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
 
-export default function Home() {
-  const tasks = useQuery(api.tasks.list)
-  const add = useMutation(api.tasks.add)
-  const setStatus = useMutation(api.tasks.setStatus).withOptimisticUpdate(
-    (store, { id, status }) => {
-      const current = store.getQuery(api.tasks.list, {})
-      if (current)
-        store.setQuery(
-          api.tasks.list,
-          {},
-          current.map((t) => (t._id === id ? { ...t, status } : t))
-        )
-    }
-  )
-  const [text, setText] = useState("")
+export default function LoansPage() {
+  const loans = useQuery(api.loans.list)
+  const markReturned = useMutation(api.loans.markReturned)
+
+  const base: Column<Loan>[] = [
+    { header: "Lent", cell: (l) => date(l.lentAt), className: "whitespace-nowrap" },
+    { header: "Lender", cell: (l) => l.lender },
+    { header: "Borrower", cell: (l) => l.borrower },
+    { header: "Cards", cell: (l) => <CardList items={l.items} /> },
+  ]
 
   return (
-    <main className="mx-auto w-full max-w-xl p-6">
-      <section className="flex flex-col gap-4 rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
-        <h1 className="text-lg font-semibold">Tasks</h1>
-          <form
-            className="flex items-end gap-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (!text.trim()) return
-              void add({ text: text.trim() })
-              setText("")
-            }}
-          >
-            <Field className="flex flex-1 flex-col gap-1.5">
-              <FieldLabel className="text-sm font-medium">New task</FieldLabel>
-              <Input
-                className="h-9 w-full rounded-lg border border-neutral-500 bg-transparent px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:focus-visible:outline-neutral-100"
-                value={text}
-                onValueChange={setText}
-              />
-            </Field>
-            <Button type="submit" className="inline-flex h-9 items-center rounded-lg bg-neutral-900 px-3 text-sm font-medium text-white hover:bg-neutral-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300 dark:focus-visible:outline-neutral-100">
-              Add task
-            </Button>
-          </form>
-          <ul className="flex flex-col gap-2">
-            {tasks?.map((t) => (
-              <li key={t._id} className="flex items-center justify-between gap-2">
-                <span>{t.text}</span>
-                <Select
-                  value={t.status}
-                  onValueChange={(status) =>
-                    status && void setStatus({ id: t._id, status })
-                  }
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold">Loans</h1>
+        <NewLoanDialog />
+      </div>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Out now</h2>
+        <DataTable
+          label="Cards out now"
+          rows={loans?.filter((l) => l.returnedAt === undefined) ?? []}
+          rowKey={(l) => l._id}
+          empty={loans ? "Nothing is out on loan." : "Loading…"}
+          columns={[
+            ...base,
+            {
+              header: "Action",
+              cell: (l) => (
+                <Button
+                  variant="secondary"
+                  aria-label={`Mark returned: ${l.lender} to ${l.borrower}, ${date(l.lentAt)}`}
+                  onClick={() => void markReturned({ id: l._id })}
                 >
-                  <SelectTrigger
-                    aria-label={`Status of ${t.text}`}
-                    className="inline-flex h-8 w-28 items-center justify-between rounded-lg border border-neutral-500 px-2.5 text-sm hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 data-open:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:outline-neutral-100 dark:data-open:bg-neutral-800"
-                  >
-                    <SelectValue />
-                    <ChevronDownIcon className="size-4" />
-                  </SelectTrigger>
-                  <SelectContent className="min-w-(--anchor-width) rounded-lg border border-neutral-200 bg-white p-1 shadow-md dark:border-neutral-800 dark:bg-neutral-900">
-                    {statuses.map((s) => (
-                      <SelectItem
-                        key={s.value}
-                        value={s.value}
-                        className="flex cursor-default items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-neutral-100 dark:data-highlighted:bg-neutral-800"
-                      >
-                        {s.label}
-                        <SelectItemIndicator>
-                          <CheckIcon className="size-4" />
-                        </SelectItemIndicator>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-            ))}
-          </ul>
+                  Mark returned
+                </Button>
+              ),
+            },
+          ]}
+        />
       </section>
-    </main>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Returned</h2>
+        <DataTable
+          label="Returned loans"
+          rows={loans?.filter((l) => l.returnedAt !== undefined) ?? []}
+          rowKey={(l) => l._id}
+          empty="No returns yet."
+          columns={[...base, { header: "Returned", cell: (l) => date(l.returnedAt!), className: "whitespace-nowrap" }]}
+        />
+      </section>
+    </div>
   )
 }

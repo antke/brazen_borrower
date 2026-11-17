@@ -8,7 +8,12 @@
  * @module
  */
 
-import type * as tasks from "../tasks.js";
+import type * as catalog from "../catalog.js";
+import type * as crons from "../crons.js";
+import type * as lib_cards from "../lib/cards.js";
+import type * as loans from "../loans.js";
+import type * as people from "../people.js";
+import type * as pool from "../pool.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +22,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  tasks: typeof tasks;
+  catalog: typeof catalog;
+  crons: typeof crons;
+  "lib/cards": typeof lib_cards;
+  loans: typeof loans;
+  people: typeof people;
+  pool: typeof pool;
 }>;
 
 /**
