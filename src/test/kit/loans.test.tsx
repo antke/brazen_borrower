@@ -61,6 +61,28 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     })
   })
 
+  test("the borrower list leaves out the lender, and typing your own name is refused", async () => {
+    const user = userEvent.setup()
+    render(<LoansPage />)
+    await user.click(screen.getByRole("button", { name: labels.newLoan }))
+    await user.click(screen.getByRole("combobox", { name: labels.borrower }))
+    const names = screen.getAllByRole("option").map((o) => o.textContent)
+    expect(names).toContain("Bob")
+    expect(names).not.toContain("Alice")
+
+    const result = await agent.act({
+      steps: [
+        { ref: labels.borrower, action: "setValue", args: ["alice"] },
+        { ref: labels.addCard, action: "setQuery", args: ["poro"] },
+        { ref: labels.addCard, action: "setValue", args: ["Pouty Poro · OGN 013"] },
+        { ref: labels.saveLoan, action: "press" },
+      ],
+    })
+    expect(result.ok, result.error?.message).toBe(true)
+    expect(screen.getByRole("alert").textContent).toContain("The lender and the borrower must be different people")
+    expect(mutations["loans:create"]).not.toHaveBeenCalled()
+  })
+
   test("a signed-in member marks a loan returned", async () => {
     render(<LoansPage />)
     const back = await agent.act({ steps: [{ ref: labels.markReturned(openLoan), action: "press" }] })

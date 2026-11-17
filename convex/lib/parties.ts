@@ -6,8 +6,8 @@ export function cleanName(name: string) {
   return clean
 }
 
-/** Same member, or (when neither is a member) the same name ignoring case. */
+/** Same member, or the same name ignoring case unless both are (different) members, so typing your own name still means you. */
 export function sameParty(a: Party, b: Party) {
-  if (a.userId !== undefined || b.userId !== undefined) return a.userId === b.userId
+  if (a.userId !== undefined && b.userId !== undefined) return a.userId === b.userId
   return a.name.toLowerCase() === b.name.toLowerCase()
 }

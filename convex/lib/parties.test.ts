@@ -10,7 +10,8 @@ test("cleanName trims, collapses spaces and enforces 1 to 40 characters", () => 
 test("sameParty compares members by id and outsiders by name", () => {
   expect(sameParty({ userId: "a", name: "Ann" }, { userId: "a", name: "Ann B" })).toBe(true)
   expect(sameParty({ userId: "a", name: "Ann" }, { userId: "b", name: "Ann" })).toBe(false)
-  expect(sameParty({ userId: "a", name: "Ann" }, { name: "Ann" })).toBe(false)
+  expect(sameParty({ userId: "a", name: "Ann" }, { name: "ann" })).toBe(true)
+  expect(sameParty({ userId: "a", name: "Ann" }, { name: "Bea" })).toBe(false)
   expect(sameParty({ name: "Joe" }, { name: "joe" })).toBe(true)
   expect(sameParty({ name: "Joe" }, { name: "Jo" })).toBe(false)
 })

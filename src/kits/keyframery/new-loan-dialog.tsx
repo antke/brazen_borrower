@@ -4,7 +4,6 @@ import { useState } from "react"
 import { cardLabel } from "@/core/cards"
 import { labels } from "@/core/labels"
 import { useLoanDraft } from "@/core/loans"
-import { useMemberOptions } from "@/core/people"
 import { Button } from "@/kits/keyframery/ui/button"
 import {
   Dialog,
@@ -19,7 +18,6 @@ import { CardSearch, CardThumb } from "./cards"
 import { Copies, ErrorAlert, PartyField } from "./fields"
 
 export function NewLoanDialog() {
-  const members = useMemberOptions()
   const draft = useLoanDraft()
   const [open, setOpen] = useState(false)
 
@@ -32,8 +30,8 @@ export function NewLoanDialog() {
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <PartyField label={labels.lender} options={members} value={draft.lender} onValueChange={draft.setLender} />
-            <PartyField label={labels.borrower} options={members} value={draft.borrower} onValueChange={draft.setBorrower} />
+            <PartyField label={labels.lender} options={draft.lenderOptions} value={draft.lender} onValueChange={draft.setLender} />
+            <PartyField label={labels.borrower} options={draft.borrowerOptions} value={draft.borrower} onValueChange={draft.setBorrower} />
           </div>
           <CardSearch label={labels.addCard} onPick={draft.addCard} />
           {draft.items.length > 0 && (

@@ -3,7 +3,7 @@ import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Card } from "./cards"
 import { errorMessage } from "./format"
-import { toParty, useMembers, useSession } from "./people"
+import { sameParty, toParty, useMembers, useSession } from "./people"
 
 export type Loan = NonNullable<ReturnType<typeof useQuery<typeof api.loans.list>>>[number]
 
@@ -59,10 +59,15 @@ export function useLoanDraft() {
       setError("Choose who lends and who borrows")
       return false
     }
+    const [lenderParty, borrowerParty] = [toParty(lender, members), toParty(borrower, members)]
+    if (sameParty(lenderParty, borrowerParty)) {
+      setError("The lender and the borrower must be different people")
+      return false
+    }
     try {
       await create({
-        lender: toParty(lender, members),
-        borrower: toParty(borrower, members),
+        lender: lenderParty,
+        borrower: borrowerParty,
         items: items.map((i) => ({ cardId: i.card._id, quantity: i.quantity })),
       })
       setLender(undefined)
@@ -76,5 +81,22 @@ export function useLoanDraft() {
     }
   }
 
-  return { lender, setLender, borrower, setBorrower, items, addCard, setQuantity, removeCard, error, save }
+  // Each picker leaves out whoever the other side already is.
+  const options = (other: string | null) =>
+    members.filter((m) => m._id !== other).map((m) => ({ value: m._id as string, label: m.name }))
+
+  return {
+    lender,
+    setLender,
+    lenderOptions: options(borrower),
+    borrower,
+    setBorrower,
+    borrowerOptions: options(lender),
+    items,
+    addCard,
+    setQuantity,
+    removeCard,
+    error,
+    save,
+  }
 }

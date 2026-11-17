@@ -39,13 +39,16 @@ export function useMembers() {
   return useQuery(api.users.list)
 }
 
-/** Picker options for members; a picker's value is a member's id, or any name typed in. */
-export function useMemberOptions() {
-  return useMembers()?.map((m) => ({ value: m._id as string, label: m.name })) ?? []
-}
-
 export type PartyInput = { userId: Id<"users"> } | { name: string }
 
-export function toParty(value: string, members: { _id: string }[]): PartyInput {
-  return members.some((m) => m._id === value) ? { userId: value as Id<"users"> } : { name: value }
+/** A picked member, a typed name that matches a member (so typing your own name still means you), or an outsider. */
+export function toParty(value: string, members: { _id: string; name: string }[]): PartyInput {
+  const typed = value.trim().toLowerCase()
+  const member = members.find((m) => m._id === value || m.name.toLowerCase() === typed)
+  return member ? { userId: member._id as Id<"users"> } : { name: value.trim() }
+}
+
+export function sameParty(a: PartyInput, b: PartyInput) {
+  if ("userId" in a || "userId" in b) return "userId" in a && "userId" in b && a.userId === b.userId
+  return a.name.toLowerCase() === b.name.toLowerCase()
 }
