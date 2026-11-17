@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, renderHook, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createAgent } from "@ui-sdk/react/agent"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { labels } from "@/core/labels"
+import { useLoans } from "@/core/loans"
 import { catalogue, members, mutations, queries, session } from "@/test/convex-mock"
 import { kitCases } from "./kits"
 
@@ -16,6 +17,7 @@ const openLoan = {
 
 beforeEach(() => {
   for (const fn of Object.values(mutations)) fn.mockClear()
+  queries["pool:list"] = []
   session.me = members[0]
   queries["loans:list"] = [openLoan, { ...openLoan, _id: "l2", returnedAt: Date.UTC(2026, 10, 5) }]
 })
@@ -63,6 +65,8 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     const user = userEvent.setup()
     render(<LoansPage />)
     await user.click(screen.getByRole("button", { name: labels.newLoan }))
+    expect(screen.queryAllByRole("option")).toHaveLength(0)
+    // A click alone lists the members; nothing has to be typed first.
     await user.click(screen.getByRole("combobox", { name: labels.borrower }))
     const names = screen.getAllByRole("option").map((o) => o.textContent)
     expect(names).toContain("Bob")
@@ -81,7 +85,7 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     expect(mutations["loans:create"]).not.toHaveBeenCalled()
   })
 
-  test("cards that aren't in your collection are marked before saving", async () => {
+  test("cards that aren't in your collection are marked, and a card with every copy lent out can't be lent again", async () => {
     queries["pool:list"] = [
       { _id: "e2", ownerId: "u1", cardId: "c2", quantity: 1, owner: "Alice", card: catalogue[1], lent: 1, available: 0 },
     ]
@@ -99,12 +103,10 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     expect(result.ok, result.error?.message).toBe(true)
     const cards = screen.getByRole("list", { name: labels.loanCards }).textContent
     expect(cards).toContain("New to your collection")
-    expect(cards).toContain("Your collection: 1 → 2")
-    expect(screen.getByRole("status").textContent).toBe("Heads up: some of these aren't in your collection yet, so we'll add them when you save.")
-
-    await agent.act({ steps: [{ ref: labels.removeCard("Blazing Scorcher · OGN 001"), action: "press" }] })
-    expect(screen.getByRole("status").textContent).toBe("Heads up: one of these isn't in your collection yet, so we'll add it when you save.")
-    queries["pool:list"] = []
+    // Your only Pouty Poro is already out, so it isn't added.
+    expect(cards).not.toContain("Pouty Poro")
+    expect(screen.getByRole("alert").textContent).toContain("Every copy of Pouty Poro in your collection is lent out")
+    expect(screen.getByRole("status").textContent).toBe("Heads up: one or more of these aren't in your collection yet, so we'll add them when you save.")
   })
 
   test("a signed-in member marks a loan returned", async () => {
@@ -137,9 +139,88 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     await user.type(screen.getByRole("combobox", { name: labels.addCard }), "poro")
     await user.keyboard("{ArrowDown}{Enter}")
     expect(screen.getByRole("list", { name: labels.loanCards }).textContent).toContain("Pouty Poro · OGN 013")
+    // The search empties after each pick, so the next card name can be typed straight away.
+    expect(screen.getByRole<HTMLInputElement>("combobox", { name: labels.addCard }).value).toBe("")
+    await user.type(screen.getByRole("combobox", { name: labels.addCard }), "scorcher")
+    await user.keyboard("{ArrowDown}{Enter}")
+    expect(screen.getByRole("list", { name: labels.loanCards }).textContent).toContain("Blazing Scorcher · OGN 001")
+    expect(screen.getByRole<HTMLInputElement>("combobox", { name: labels.addCard }).value).toBe("")
 
     await user.click(screen.getByRole("button", { name: labels.saveLoan }))
     expect(screen.getByRole("alert").textContent).toContain("Who's borrowing? Pick someone or type a name")
     expect(mutations["loans:create"]).not.toHaveBeenCalled()
+  })
+
+  test("opening a loan lists its cards, and returning some of them sends only those copies back", async () => {
+    const user = userEvent.setup()
+    render(<LoansPage />)
+    await user.click(screen.getByRole("button", { name: labels.loanDetails(openLoan) }))
+    expect(screen.getByRole("list", { name: labels.loanCards }).textContent).toContain("Pouty Poro")
+    const returnSome = screen.getByRole("button", { name: labels.returnSome })
+    expect(returnSome.hasAttribute("disabled") || returnSome.getAttribute("aria-disabled") === "true").toBe(true)
+
+    await user.click(screen.getByRole("button", { name: `Increase ${labels.copiesBack("Pouty Poro · OGN 013")}` }))
+    await user.click(screen.getByRole("button", { name: labels.returnSome }))
+    expect(mutations["loans:returnCards"]).toHaveBeenCalledWith({ id: "l1", items: [{ cardId: "c2", quantity: 1 }] })
+  })
+
+  test("an empty card search offers your own collection, and typing switches to the catalogue", async () => {
+    queries["pool:list"] = [
+      { _id: "e2", ownerId: "u1", cardId: "c2", quantity: 1, owner: "Alice", card: catalogue[1], lent: 0, available: 1 },
+      { _id: "e3", ownerId: "u2", cardId: "c3", quantity: 1, owner: "Bob", card: catalogue[2], lent: 0, available: 1 },
+    ]
+    const user = userEvent.setup()
+    render(<LoansPage />)
+    await user.click(screen.getByRole("button", { name: labels.newLoan }))
+    await user.click(screen.getByRole("combobox", { name: labels.addCard }))
+    await user.keyboard("{ArrowDown}")
+    // Only your own cards (Bob's Fury Rune isn't yours).
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Pouty Poro · OGN 013"])
+    await user.keyboard("{Enter}")
+    expect(screen.getByRole("list", { name: labels.loanCards }).textContent).toContain("Pouty Poro")
+
+    await user.type(screen.getByRole("combobox", { name: labels.addCard }), "rune")
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Fury Rune · OGN 007"])
+    queries["pool:list"] = []
+  })
+
+  test("both lists filter by who lent, who borrowed and which cards", async () => {
+    const bobsLoan = {
+      _id: "l3", _creationTime: 2, lender: { userId: "u2", name: "Bob" }, borrower: { name: "Carol" },
+      lentAt: Date.UTC(2026, 10, 3), items: [{ cardId: "c3", quantity: 1, card: catalogue[2] }],
+    }
+    queries["loans:list"] = [openLoan, bobsLoan, { ...openLoan, _id: "l2", returnedAt: Date.UTC(2026, 10, 5) }]
+    render(<LoansPage />)
+    const out = () => screen.getByRole("table", { name: labels.outNow }).textContent
+
+    let result = await agent.act({ steps: [{ ref: labels.filterBorrower, action: "setValue", args: ["Carol"] }] })
+    expect(result.ok, result.error?.message).toBe(true)
+    expect(out()).toContain("Carol")
+    expect(out()).not.toContain("Uncle Joe")
+    expect(screen.getByText("No returns match these filters.")).toBeTruthy()
+
+    result = await agent.act({
+      steps: [
+        { ref: labels.filterBorrower, action: "setValue", args: [""] },
+        { ref: labels.filterLoanCards, action: "setValue", args: ["poro"] },
+      ],
+    })
+    expect(result.ok, result.error?.message).toBe(true)
+    expect(out()).toContain("Uncle Joe")
+    expect(out()).not.toContain("Carol")
+    expect(screen.getByRole("table", { name: labels.returned }).textContent).toContain("Uncle Joe")
+  })
+
+  test("whoever is picked as lender can't also be picked as borrower, and the other way round", () => {
+    // Alice has lent (to Uncle Joe) and borrowed (from Bob), so she starts on both sides.
+    queries["loans:list"] = [openLoan, { ...openLoan, _id: "l4", lender: { userId: "u2", name: "Bob" }, borrower: { userId: "u1", name: "Alice" } }]
+    const { result } = renderHook(() => useLoans())
+    expect(result.current.lenders).toContain("Alice")
+    expect(result.current.borrowers).toContain("Alice")
+    act(() => result.current.setFilter({ lender: "Alice" }))
+    expect(result.current.borrowers).not.toContain("Alice")
+    act(() => result.current.setFilter({ lender: "", borrower: "Alice" }))
+    expect(result.current.lenders).not.toContain("Alice")
+    expect(result.current.borrowers).toContain("Alice")
   })
 })

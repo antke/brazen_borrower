@@ -2,7 +2,7 @@ import { v, type Infer } from "convex/values"
 import type { Doc } from "./_generated/dataModel"
 import { mutation, query, type QueryCtx } from "./_generated/server"
 import { currentUser, requireUser } from "./lib/auth"
-import { assertQuantity, lentOut, poolTopUp } from "./lib/cards"
+import { assertCanLend, assertQuantity, lentOut, poolTopUp, splitReturn } from "./lib/cards"
 import { cleanName, sameParty } from "./lib/parties"
 import { loanItem, partyInput } from "./schema"
 
@@ -61,22 +61,24 @@ export const create = mutation({
     if (args.items.length === 0) throw new Error("Add at least one card")
     if (new Set(args.items.map((i) => i.cardId)).size !== args.items.length)
       throw new Error("Each card can only be listed once; raise its quantity instead")
+    // Lending a card means having it. From your collection you can lend only the copies that aren't
+    // already out; a card that isn't in your collection yet joins it. Everything is checked before anything is written.
+    const out = lentOut(await ctx.db.query("loans").collect())
+    const checked = []
     for (const item of args.items) {
       assertQuantity(item.quantity)
-      if (!(await ctx.db.get(item.cardId))) throw new Error("Unknown card")
-    }
-    // Lending a card means having it: add it to your pool, or raise your offer to cover it.
-    const out = lentOut(await ctx.db.query("loans").collect())
-    for (const item of args.items) {
+      const card = await ctx.db.get(item.cardId)
+      if (!card) throw new Error("Unknown card")
       const offer = await ctx.db
         .query("pool")
         .withIndex("by_owner_card", (q) => q.eq("ownerId", me._id).eq("cardId", item.cardId))
         .unique()
-      const change = poolTopUp(item, { offered: offer?.quantity, lent: out.get(`${me._id}:${item.cardId}`) ?? 0 })
-      if (!change) continue
-      if (offer) await ctx.db.patch(offer._id, { quantity: change.to })
-      else await ctx.db.insert("pool", { ownerId: me._id, cardId: item.cardId, quantity: change.to })
+      const holding = { offered: offer?.quantity, lent: out.get(`${me._id}:${item.cardId}`) ?? 0 }
+      assertCanLend(item, holding, card.name)
+      checked.push({ item, change: poolTopUp(item, holding) })
     }
+    for (const { item, change } of checked)
+      if (change) await ctx.db.insert("pool", { ownerId: me._id, cardId: item.cardId, quantity: change.to })
     return ctx.db.insert("loans", { lender, borrower, items: args.items, lentAt: Date.now() })
   },
 })
@@ -88,5 +90,23 @@ export const markReturned = mutation({
     const loan = await ctx.db.get(id)
     if (!loan) throw new Error("Unknown loan")
     if (loan.returnedAt === undefined) await ctx.db.patch(id, { returnedAt: Date.now() })
+  },
+})
+
+/** Some of a loan's cards came back early. They move to a returned copy of the loan (same people,
+    same lent date), and the rest stay out on this one; everything coming back just marks it returned. */
+export const returnCards = mutation({
+  args: { id: v.id("loans"), items: v.array(loanItem) },
+  handler: async (ctx, { id, items }) => {
+    await requireUser(ctx)
+    const loan = await ctx.db.get(id)
+    if (!loan) throw new Error("Unknown loan")
+    if (loan.returnedAt !== undefined) throw new Error("This loan has already been returned")
+    if (items.length === 0) throw new Error("Pick at least one card that came back")
+    const { returned, stillOut } = splitReturn(loan.items, items)
+    const returnedAt = Date.now()
+    if (stillOut.length === 0) return ctx.db.patch(id, { returnedAt })
+    await ctx.db.patch(id, { items: stillOut })
+    await ctx.db.insert("loans", { lender: loan.lender, borrower: loan.borrower, items: returned, lentAt: loan.lentAt, returnedAt })
   },
 })

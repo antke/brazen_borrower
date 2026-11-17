@@ -1,0 +1,15 @@
+{
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "var(--ease-spring)",
+        "createdAt": "2026-11-17T13:51:52.550Z",
+        "reason": "agent decision: --ease-spring is the Keyframery kit's house spring (peaks ~1.05, settles without bouncing), already used by its vendored card, table and select primitives; the new title and loan-row motion reuses it to match"
+      }
+    ]
+  }
+}

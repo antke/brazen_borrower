@@ -1,6 +1,9 @@
 @layer ui-sdk;
 @import "tailwindcss";
 
+/* Dark follows the `dark` class that src/core/theme.ts puts on <html>, so the theme toggle can override the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* shadcn/ui's neutral theme variables, which Keyframery's classes read (no shadcn components). */
 @theme inline {
   --color-background: var(--background);
@@ -27,49 +30,63 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+/* Brazen Borrower's palette: near-neutral greys so the card art and the mascot carry the colour,
+   and the mascot's periwinkle skin as the one accent (primary keys, available counts, focus).
+   Flat fields only, with no gradients or glow. Dark leads, because game nights are evenings. */
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-glyphic), var(--font-geist), serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-  }
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.001 285);
+  --foreground: oklch(0.2 0.005 285);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.005 285);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.005 285);
+  /* Periwinkle. As a key face it carries dark ink, so it holds in both modes. */
+  --primary: oklch(0.77 0.1 278);
+  --primary-foreground: oklch(0.2 0.03 280);
+  --secondary: oklch(0.955 0.002 285);
+  --secondary-foreground: oklch(0.2 0.005 285);
+  --muted: oklch(0.96 0.002 285);
+  --muted-foreground: oklch(0.5 0.01 285);
+  --accent: oklch(0.95 0.003 285);
+  --accent-foreground: oklch(0.2 0.005 285);
+  --destructive: oklch(0.56 0.15 35);
+  --border: oklch(0.91 0.003 285);
+  --input: oklch(0.89 0.004 285);
+  --ring: oklch(0.6 0.13 278);
+  /* The live region ("Out now"): lifted a step off the page. */
+  --live: oklch(0.955 0.004 285);
+  --live-border: oklch(0.89 0.005 285);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.16 0.003 285);
+  --foreground: oklch(0.95 0.003 285);
+  --card: oklch(0.2 0.004 285);
+  --card-foreground: oklch(0.95 0.003 285);
+  --popover: oklch(0.225 0.004 285);
+  --popover-foreground: oklch(0.95 0.003 285);
+  --primary: oklch(0.78 0.1 278);
+  --primary-foreground: oklch(0.2 0.03 280);
+  --secondary: oklch(0.26 0.005 285);
+  --secondary-foreground: oklch(0.95 0.003 285);
+  --muted: oklch(0.24 0.004 285);
+  --muted-foreground: oklch(0.7 0.01 285);
+  --accent: oklch(0.27 0.006 285);
+  --accent-foreground: oklch(0.95 0.003 285);
+  --destructive: oklch(0.72 0.13 38);
+  --border: oklch(0.3 0.005 285);
+  --input: oklch(0.34 0.006 285);
+  --ring: oklch(0.78 0.1 278);
+  --live: oklch(0.245 0.006 285);
+  --live-border: oklch(0.33 0.006 285);
 }
 
 @layer base {
@@ -80,18 +97,347 @@
   body {
     background: var(--background);
     color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+  /* The parts of the page the browser draws, in the house colours. */
+  html {
+    accent-color: var(--primary);
+    scrollbar-color: var(--input) transparent;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 45%, transparent);
+    color: var(--foreground);
+  }
+  input,
+  textarea {
+    caret-color: var(--ring);
+  }
+  table {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Dialogs soften the page behind them as well as dimming it, so the open task reads as the only thing in play. */
-[data-slot="dialog-backdrop"] {
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+/* Section tones. A page marks what a section is, and the kit decides how it looks.
+   live: what is happening now, lifted a step. quiet: history, recessed into the page. */
+[data-slot="card"][data-tone="live"] {
+  --card-face: var(--live);
+  --table-border: var(--live-border);
+  --table-accent: color-mix(in oklch, var(--foreground) 5%, transparent);
+}
+[data-slot="card"][data-tone="quiet"] {
+  --card-face: transparent;
+}
+
+/* Every page fits the window. The shell's <main> is a grid with one row per section; each row is as
+   tall as its content until the window runs out, then the leftover height is shared evenly among
+   the sections that want more, and their tables scroll inside with the headings pinned. A section
+   never gets shorter than 9rem; in a window too short for that, <main> itself scrolls. */
+main > [data-slot="card"] {
+  min-height: 9rem;
+  --surface: var(--card-face, var(--card));
+}
+main > [data-slot="card"] > [data-slot="card-header"] {
+  flex-shrink: 0;
+}
+main > [data-slot="card"] > [data-slot="card-content"] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+main > [data-slot="card"] > [data-slot="card-content"] > :not([data-slot="table-container"]) {
+  flex-shrink: 0;
+}
+main > [data-slot="card"] [data-slot="table-container"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+main > [data-slot="card"] [data-slot="table-header"] [data-slot="table-head"] {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  box-shadow: inset 0 -1px 0 var(--table-border, var(--border)); /* the row rule, which a sticky cell would lose */
+}
+main > [data-slot="card"][data-tone="quiet"] {
+  --surface: var(--background);
+}
+
+/* Page titles use the display face and rise with the cards beneath them. */
+/* On a phone a table becomes a list. Each row is a block: the main thing (the card, data-col="main")
+   and the row's action, if it has one (data-col="end"), share the top line, and the other columns
+   follow underneath as one labelled line ("Owner antke  Available 4"), each named by
+   its data-label. The column headings stay in the page for screen readers, just not drawn. */
+@media (max-width: 639.98px) {
+  [data-slot="table"],
+  [data-slot="table-body"] {
+    display: block;
+  }
+  [data-slot="table-header"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  [data-slot="table-body"] > [data-slot="table-row"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between; /* the labelled line spans the row; the card's flex-grow fills the top one */
+    gap: 0.25rem 0.75rem;
+    padding: 0.75rem var(--table-padding, 0.75rem);
+  }
+  /* A table whose labelled line runs to two lines (loans) lets it flow from the left. */
+  [data-slot="table"][data-flow] > [data-slot="table-body"] > [data-slot="table-row"] {
+    justify-content: flex-start;
+  }
+  /* There the row's action goes last, at the bottom right, so the cards get the whole top line. */
+  [data-slot="table"][data-flow] [data-slot="table-cell"][data-col="end"] {
+    order: 4;
+    margin-left: auto;
+  }
+  /* The line break between the top line and the labelled line. */
+  [data-slot="table-body"] > [data-slot="table-row"]::after {
+    content: "";
+    order: 2;
+    flex-basis: 100%;
+  }
+  [data-slot="table-body"] [data-slot="table-cell"] {
+    display: flex;
+    align-items: center;
+    height: auto;
+    padding: 0;
+    order: 3;
+  }
+  [data-slot="table-body"] [data-slot="table-cell"][data-col="main"] {
+    display: block;
+    order: 0;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  [data-slot="table-body"] [data-slot="table-cell"][data-col="end"] {
+    order: 1;
+  }
+  [data-slot="table-body"] [data-slot="table-cell"][data-label]::before {
+    content: attr(data-label);
+    margin-right: 0.375rem;
+    color: var(--table-muted, var(--muted-foreground));
+  }
+  /* A value that needs no label, like the owner's name, stands out in bold instead. */
+  [data-slot="table-body"] [data-slot="table-cell"][data-strong] {
+    font-weight: 600;
+  }
+}
+
+/* On a phone a dialog is a bottom sheet: full width, risen from the bottom edge to just under the
+   app's title row, so the name and account stay in view. It is always that tall; what it holds
+   scrolls inside it (the dialog decides what), and it slides rather than unfolds. The backdrop
+   dims without blurring, so the title stays readable. */
+@media (max-width: 639.98px) {
+  [data-slot="dialog-content"] {
+    top: calc(env(safe-area-inset-top) + 4.25rem);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    padding-bottom: max(var(--dialog-padding, 1.25rem), env(safe-area-inset-bottom));
+  }
+  /* The sheet's corner X is a key sized for a thumb. */
+  [data-slot="dialog-content"] > [data-variant="icon"] {
+    top: 1rem;
+    right: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+  }
+  [data-slot="dialog-content"] > [data-variant="icon"] svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  [data-slot="dialog-content"]:is([data-starting-style], [data-ending-style]) {
+    translate: 0 100%;
+    scale: 1;
+    filter: none;
+    opacity: 1;
+  }
+}
+
+/* The new-loan button. From sm up it's an ordinary primary key beside the page title. On a phone it
+   becomes a big round + floating in the window's corner, clear of the home bar (its words stay for
+   screen readers), and the page keeps a strip clear at the bottom so it never covers a row's action. */
+@media (max-width: 639.98px) {
+  [data-fab] {
+    --button-height: 3.5rem;
+    --button-radius: 9999px;
+    position: fixed;
+    right: max(1.25rem, env(safe-area-inset-right));
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    z-index: 30;
+    width: var(--button-height);
+    padding: 0;
+    filter: drop-shadow(0 10px 18px oklch(0 0 0 / 0.3));
+  }
+  [data-fab] svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  main:has([data-fab]) {
+    padding-bottom: 6.5rem;
+  }
+}
+
+[data-slot="page-title"] {
+  font-family: var(--font-display);
+  font-weight: 400;
+  animation: kf-title-in calc(560ms * var(--kf-speed, 1)) var(--ease-spring) backwards;
+}
+@keyframes kf-title-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+    filter: blur(4px);
+  }
+}
+
+/* A loan of several cards shows up to three of them as a small fanned hand: each card overlaps the
+   last, turned a little, with a hairline of the surface between them so the edges read. */
+[data-slot="card-fan"] {
+  display: inline-flex;
+  padding-inline: 2px;
+}
+[data-slot="card-fan"] > img {
+  border-radius: 3px;
+  box-shadow: 0 0 0 1.5px var(--surface, var(--card));
+}
+[data-slot="card-fan"] > img + img {
+  margin-left: -12px; /* enough of each card shows for three to read as three */
+}
+[data-slot="card-fan"] > img:first-child:not(:last-child) {
+  rotate: -7deg;
+}
+[data-slot="card-fan"] > img:nth-child(3) {
+  rotate: 7deg;
+}
+
+/* A card in a dialog's list: its name reads a step larger, next to the row-tall art. */
+[data-card-row] {
+  --item-font: 15px;
+}
+
+/* A loan's row opens the loan: the whole row is clickable. */
+[data-slot="table-row"][data-clickable] {
+  cursor: pointer;
+}
+
+/* Card art. The thumbnail is a stamp; resting on it lifts the full printing beside it, tilted like
+   a card picked up off the table. Anchored and fixed so a scrolling table can't clip it. */
+[data-slot="card-art"] {
+  anchor-scope: --card-art;
+  anchor-name: --card-art;
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  cursor: zoom-in;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
+}
+[data-slot="card-art"] > img {
+  border-radius: inherit;
+}
+[data-slot="card-art-preview"] {
+  position: fixed;
+  position-anchor: --card-art;
+  position-area: right center;
+  position-try-fallbacks: flip-inline, flip-block;
+  margin-inline: 14px;
+  z-index: 50;
+  width: 216px;
+  pointer-events: none;
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow:
+    0 2px 4px oklch(0 0 0 / 0.25),
+    0 24px 48px -12px oklch(0 0 0 / 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transform-origin: left center;
+  transform: rotate(-6deg) scale(0.4);
+  transition:
+    opacity calc(140ms * var(--kf-speed, 1)) var(--ease-house),
+    transform calc(420ms * var(--kf-speed, 1)) var(--ease-pop),
+    visibility 0s linear calc(140ms * var(--kf-speed, 1));
+}
+[data-slot="card-art-preview"] > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+[data-slot="card-art"]:is(:hover, :active) > [data-slot="card-art-preview"] {
+  opacity: 1;
+  visibility: visible;
+  transform: rotate(-2deg) scale(1);
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="card-art-preview"] {
+    transform: none;
+    transition: opacity 120ms linear, visibility 0s linear 120ms;
+  }
+  [data-slot="card-art"]:is(:hover, :active) > [data-slot="card-art-preview"] {
+    transform: none;
+  }
+}
+
+/* Loan rows change in place: a new loan just appears, a returned one just moves lists. Neither the
+   row nor the card item inside it animates in, because a new loan's cards fading up and un-blurring
+   while the dialog closed looked like the page reloading. */
+[data-slot="table-body"] > tr[data-moves],
+[data-slot="table-body"] [data-slot="item"] {
+  animation: none;
+}
+
+/* The theme toggle crossfades the whole page (src/core/theme.ts), the app's only view transition. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: calc(200ms * var(--kf-speed, 1));
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* A closed dialog stays invisible. When its fade-out ends, the primitive drops data-ending-style a
+   frame or two before removing the dialog, and without this the backdrop snapped back to full
+   strength for those frames, and the page darkened again just after the dialog closed, like a reload. */
+[data-slot="dialog-backdrop"][data-closed],
+[data-slot="dialog-content"][data-closed] {
+  opacity: 0;
+}
+
+/* Dialogs soften the page behind them as well as dimming it, so the open task reads as the only thing
+   in play. Not on phones, where the sheet leaves the title row in view and it should stay readable. */
+@media (min-width: 640px) {
+  [data-slot="dialog-backdrop"] {
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
 }
 
 /* An item inside a table cell (a card's art and name) already has the cell's padding around it. */
 td [data-slot="item"] {
-  --item-padding: 0px;
+  --item-padding: 0.375rem 0px; /* breathing room above and below the card art */
 }
 
 /* Keyframery motion styles, from its registry's `motion` item. */

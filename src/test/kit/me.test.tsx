@@ -28,7 +28,7 @@ beforeEach(() => {
 })
 
 describe.each(kitCases)("%s kit: me", (_, { MePage }) => {
-  test("an agent adds to, recounts and removes from the member's collection", async () => {
+  test("an agent adds to and recounts the member's collection, and a card with copies lent out can't be removed", async () => {
     render(<MePage />)
     const result = await agent.act({
       steps: [
@@ -36,13 +36,15 @@ describe.each(kitCases)("%s kit: me", (_, { MePage }) => {
         { ref: labels.cardToOffer, action: "setQuery", args: ["scorcher"] },
         { ref: labels.cardToOffer, action: "setValue", args: ["Blazing Scorcher · OGN 001"] },
         { ref: labels.offeredCopies("Pouty Poro · OGN 013"), action: "setValue", args: [4] },
-        { ref: labels.withdraw("Pouty Poro · OGN 013"), action: "press" },
+
       ],
     })
     expect(result.ok, result.error?.message).toBe(true)
     expect(mutations["pool:set"]).toHaveBeenCalledWith({ cardId: "c1", quantity: 3 })
     expect(mutations["pool:set"]).toHaveBeenCalledWith({ cardId: "c2", quantity: 4 })
-    expect(mutations["pool:set"]).toHaveBeenCalledWith({ cardId: "c2", quantity: 0 })
+    // One Pouty Poro is lent out, so it can't be removed until it comes back.
+    expect(screen.getByRole("button", { name: labels.withdraw("Pouty Poro · OGN 013") }).hasAttribute("disabled")).toBe(true)
+    expect(mutations["pool:set"]).not.toHaveBeenCalledWith({ cardId: "c2", quantity: 0 })
     for (const e of agent.snapshot().filter((e) => !e.offPage && e.component !== "more"))
       expect(e.label, `${e.component} ${e.ref} has no name`).toBeTruthy()
   })

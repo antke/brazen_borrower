@@ -11,9 +11,21 @@ import {
   ComboboxLabel,
   ComboboxList,
 } from "@/kits/keyframery/ui/combobox"
-import { Empty, EmptyHeader, EmptyTitle } from "@/kits/keyframery/ui/empty"
+import { Badge, Roll } from "@/kits/keyframery/ui/badge"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/kits/keyframery/ui/empty"
 import { Field, FieldLabel } from "@/kits/keyframery/ui/field"
 import { Item, ItemContent, ItemDescription } from "@/kits/keyframery/ui/item"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+  SelectLabel,
+  SelectList,
+  SelectTrigger,
+  SelectValue,
+} from "@/kits/keyframery/ui/select"
 import {
   NumberInput,
   NumberInputControl,
@@ -62,22 +74,63 @@ export function PartyField({
   )
 }
 
+/** Pick one of a list of names, or "Anyone" (the empty value). */
+export function PersonSelect({
+  label,
+  names,
+  value,
+  onValueChange,
+}: {
+  label: string
+  names: string[]
+  value: string
+  onValueChange: (name: string) => void
+}) {
+  const show = (name: string) => name || "Anyone"
+  return (
+    <Select<string> value={value} onValueChange={(name) => onValueChange(name ?? "")} itemToLabel={show}>
+      {/* No gap: the select's label brings its own space, which lines the field up with a text field beside it. */}
+      <div className="flex flex-col">
+        <SelectLabel>{label}</SelectLabel>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+      </div>
+      <SelectContent>
+        <SelectList>
+          {["", ...names].map((name) => (
+            <SelectItem key={show(name)} value={name} label={show(name)}>
+              <SelectItemText>{show(name)}</SelectItemText>
+              <SelectItemIndicator />
+            </SelectItem>
+          ))}
+        </SelectList>
+      </SelectContent>
+    </Select>
+  )
+}
+
 export function Copies({
   label,
   hideLabel = false,
   value,
   onValueChange,
+  min = 1,
+  max = 99,
 }: {
   label: string
   hideLabel?: boolean
   value: number
   onValueChange: (value: number) => void
+  min?: number
+  max?: number
 }) {
   return (
-    // Two digits never need more room; a stepper stretched to its column reads as a slider.
-    <Field className="w-32 shrink-0">
-      <FieldLabel className={hideLabel ? "sr-only" : undefined}>{label}</FieldLabel>
-      <NumberInput value={value} onValueChange={(v) => v !== null && onValueChange(v)} min={1} max={99}>
+    // Two digits never need more room; a stepper stretched to its column reads as a slider. A phone gets a narrower one.
+    <Field className="w-28 shrink-0 sm:w-32">
+      {/* w-px: the kit label's w-fit otherwise beats sr-only's 1px, and the hidden text widens its container. */}
+      <FieldLabel className={hideLabel ? "sr-only w-px" : undefined}>{label}</FieldLabel>
+      <NumberInput value={value} onValueChange={(v) => v !== null && onValueChange(v)} min={min} max={max}>
         <NumberInputGroup>
           <NumberInputDecrement aria-label={`Decrease ${label}`} />
           <NumberInputControl />
@@ -107,13 +160,29 @@ export function EmptyNote({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function EmptyState({ title, children }: { title: string; children?: React.ReactNode }) {
+export function EmptyState({ title, media, children }: { title: string; media?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <Empty>
       <EmptyHeader>
+        {media && <EmptyMedia>{media}</EmptyMedia>}
         <EmptyTitle>{title}</EmptyTitle>
       </EmptyHeader>
       {children}
     </Empty>
   )
+}
+
+/** A number that rolls digit by digit when the record changes under it. */
+export function Count({ value }: { value: number }) {
+  return (
+    <>
+      <Roll text={String(value)} />
+      <span className="sr-only">{value}</span>
+    </>
+  )
+}
+
+/** Copies someone could borrow right now: lit when there are some, quiet when every copy is out. */
+export function Available({ value }: { value: number }) {
+  return <Badge variant={value > 0 ? "default" : "outline"} count={value} />
 }

@@ -33,19 +33,24 @@ export function searchCards<C extends CatalogCard>(cards: C[], query: string, li
 /**
  * A search-and-pick card field's state, for a Combobox with `value={null}`, `filter={false}`,
  * `query`/`onQueryChange` and `onValueChange={pick}`. The whole catalogue loads once, so typing never waits.
+ * With an empty query it lists `suggestions` (card ids), so a likely card is one arrow key away.
  */
-export function useCardPicker(onPick: (card: Card) => void) {
+export function useCardPicker(onPick: (card: Card) => void, suggestions: string[] = []) {
   const catalogue = useQuery(api.catalog.list)
   const options = useMemo(
     () => catalogue?.map((card) => ({ ...card, value: card._id as string, label: cardLabel(card), card })) ?? [],
     [catalogue]
   )
+  const byId = useMemo(() => new Map(options.map((o) => [o.value, o])), [options])
   const [query, setQuery] = useState("")
+  const typing = query.trim() !== ""
   return {
     loading: catalogue === undefined,
     query,
     setQuery,
-    results: query.trim() ? searchCards(options, query) : [],
+    /** True while the field is empty and showing `suggestions` instead of search results. */
+    suggesting: !typing && suggestions.length > 0,
+    results: typing ? searchCards(options, query) : suggestions.flatMap((id) => byId.get(id) ?? []),
     pick(value: unknown) {
       // Looked up in the whole catalogue: the combobox can clear the query before it reports the pick.
       const option = options.find((o) => o.value === value)

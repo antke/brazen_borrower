@@ -2,7 +2,7 @@ import { v } from "convex/values"
 import type { Doc } from "./_generated/dataModel"
 import { mutation, query, type QueryCtx } from "./_generated/server"
 import { currentUser, requireUser } from "./lib/auth"
-import { assertQuantity, lentOut } from "./lib/cards"
+import { assertCanSetCopies, assertQuantity, lentOut } from "./lib/cards"
 
 async function withAvailability(ctx: QueryCtx, entries: Doc<"pool">[]) {
   const out = lentOut(await ctx.db.query("loans").collect())
@@ -33,13 +33,17 @@ export const mine = query({
   },
 })
 
-/** Sets how many copies of a card the signed-in member offers; 0 takes it out of the pool. */
+/** Sets how many copies of a card the signed-in member offers; 0 takes it out of the pool. Never below the copies lent out. */
 export const set = mutation({
   args: { cardId: v.id("cards"), quantity: v.number() },
   handler: async (ctx, { cardId, quantity }) => {
     const user = await requireUser(ctx)
     assertQuantity(quantity, 0)
-    if (!(await ctx.db.get(cardId))) throw new Error("Unknown card")
+    const card = await ctx.db.get(cardId)
+    if (!card) throw new Error("Unknown card")
+    // Copies out on loan can't be taken out of the collection until they come back.
+    const lent = lentOut(await ctx.db.query("loans").collect()).get(`${user._id}:${cardId}`) ?? 0
+    assertCanSetCopies(quantity, lent, card.name)
     const existing = await ctx.db
       .query("pool")
       .withIndex("by_owner_card", (q) => q.eq("ownerId", user._id).eq("cardId", cardId))
