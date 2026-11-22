@@ -5,6 +5,7 @@ export const labels = {
   signIn: "Sign in",
   signOut: "Sign out",
   toggleTheme: "Toggle theme",
+  install: "Install app",
   signInToLend: "Sign in to record a loan",
   newLoan: "New loan",
   loanDialog: "Record a loan",

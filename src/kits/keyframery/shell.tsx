@@ -1,15 +1,17 @@
 "use client"
 
 import { SignInButton, SignOutButton } from "@clerk/nextjs"
-import { Moon, Sun } from "lucide-react"
+import { Download, Moon, Sun } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
+import { dismissInstall, install, useInstallMode } from "@/core/install"
 import { labels } from "@/core/labels"
 import { useSession } from "@/core/people"
 import { toggleTheme } from "@/core/theme"
 import mark from "@/images/borrower_mark.png"
+import { Alert, AlertClose, AlertDescription, AlertTitle } from "@/kits/keyframery/ui/alert"
 import { Button } from "@/kits/keyframery/ui/button"
 
 const links = [
@@ -58,6 +60,31 @@ function Account() {
   )
 }
 
+/** Offers to put the app on the home screen, on phones that haven't yet. */
+function InstallBanner() {
+  const mode = useInstallMode()
+  if (mode === "none") return null
+  return (
+    <Alert onOpenChange={(open) => open || dismissInstall()}>
+      <Download aria-hidden="true" />
+      <AlertTitle>Get Brazen Borrower on your home screen</AlertTitle>
+      <AlertDescription>
+        {mode === "prompt" ? (
+          <>
+            <p>It opens like an app, full screen, one tap away.</p>
+            <Button variant="primary" size="sm" onClick={install}>
+              {labels.install}
+            </Button>
+          </>
+        ) : (
+          <p>Tap Share in the browser toolbar, then “Add to Home Screen”.</p>
+        )}
+      </AlertDescription>
+      <AlertClose />
+    </Alert>
+  )
+}
+
 export function Shell({ children }: { children: ReactNode }) {
   // The proxy serves this kit under /keyframery, but the browser keeps the shared URL.
   const pathname = usePathname().replace(/^\/keyframery(?=\/|$)/, "") || "/"
@@ -99,7 +126,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-cols-[minmax(0,1fr)] content-start gap-6 overflow-y-auto px-4 py-8">{children}</main>
+      <main className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-cols-[minmax(0,1fr)] content-start gap-6 overflow-y-auto px-4 py-8">
+        <InstallBanner />
+        {children}
+      </main>
     </div>
   )
 }
