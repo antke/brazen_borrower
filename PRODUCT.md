@@ -39,7 +39,7 @@ Current functionality:
 Technical constraints:
 
 - Next.js 16 App Router. This version breaks earlier conventions, so read `node_modules/next/dist/docs/` before writing Next code. Convex is the realtime backend and database. UI is built with `@ui-sdk/react` (beta), Tailwind CSS 4 and lucide-react. Tests run on Vitest. The dev server runs on port 3333.
-- **Swappable UI kit:** the interface is a kit in `src/kits/<kit>/`, currently Keyframery, with its routes in `src/app/(<kit>)/`. The `kit` cookie picks the kit (`src/proxy.ts`). Other kits, for example SPEC-01, go beside it. Hooks, rules and accessible names shared by every kit live in `src/core`. Every component comes from the kit's `ui/` wrappers, and pages must not override their styles. The full rules are in `AGENTS.md`.
+- **One UI kit:** the interface is Keyframery, in `src/kits/keyframery/`, with plain routes and styles in `src/app/`. Hooks, rules and accessible names live in `src/core`. Every component comes from the kit's `ui/` wrappers, and pages must not override their styles. The full rules are in `AGENTS.md`.
 - **Agent-operable:** `src/core/providers.tsx` registers ui-sdk agent tools (WebMCP), so agents can operate every control. New controls must stay reachable that way. Any action that needs a person's confirmation must be marked `data-agent-confirm`.
 - **Catalogue:** card data comes from RiftHunt's bulk export (`api.rifthunt.com/bulk/cards`). Card art is hosted on Riot's CDN (`cmsassets.rgpub.io`), which is the only remote image host allowed in `next.config.ts`. A cron syncs it daily at 05:00 UTC. RiftHunt asks for at most one bulk download a day and a User-Agent that names the client.
 

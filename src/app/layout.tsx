@@ -5,7 +5,7 @@ import type { ReactNode } from "react"
 import { Providers } from "@/core/providers"
 import { themeScript } from "@/core/theme"
 import { Shell } from "@/kits/keyframery/shell"
-import "@/kits/keyframery/kit.css"
+import "./globals.css"
 
 // Geist carries the tables and controls; Faculty Glyphic, cut like a card's title line, carries titles.
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" })
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: "Who has whose Riftbound cards.",
 }
 
-export default function KeyframeryLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // The theme script sets the `dark` class before React hydrates, so <html> differs from the server render.
     <html lang="en" className={`${geist.variable} ${glyphic.variable}`} suppressHydrationWarning>

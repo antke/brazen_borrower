@@ -1,5 +1,6 @@
 "use client"
 
+import { CheckCheckIcon, Undo2Icon } from "lucide-react"
 import { useState } from "react"
 import { cardLabel } from "@/core/cards"
 import { formatDate } from "@/core/format"
@@ -121,6 +122,7 @@ export function LoanDetailsDialog({
                   setOpen(false)
                 }}
               >
+                <CheckCheckIcon aria-hidden="true" />
                 {labels.returnAll}
               </Button>
               <Button
@@ -132,6 +134,7 @@ export function LoanDetailsDialog({
                   else setOpen(false)
                 }}
               >
+                <Undo2Icon aria-hidden="true" />
                 {labels.returnSome}
               </Button>
             </DialogFooter>

@@ -10,10 +10,12 @@
 
 import type * as catalog from "../catalog.js";
 import type * as crons from "../crons.js";
+import type * as decks from "../decks.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_cards from "../lib/cards.js";
 import type * as lib_clerk from "../lib/clerk.js";
+import type * as lib_decks from "../lib/decks.js";
 import type * as lib_parties from "../lib/parties.js";
 import type * as loans from "../loans.js";
 import type * as pool from "../pool.js";
@@ -28,10 +30,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   catalog: typeof catalog;
   crons: typeof crons;
+  decks: typeof decks;
   http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/cards": typeof lib_cards;
   "lib/clerk": typeof lib_clerk;
+  "lib/decks": typeof lib_decks;
   "lib/parties": typeof lib_parties;
   loans: typeof loans;
   pool: typeof pool;

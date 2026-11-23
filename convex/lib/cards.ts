@@ -5,6 +5,10 @@ export type RiftHuntCard = {
   set: string
   rarity: string
   imgUrl: string
+  type?: string | null
+  supertype?: string | null
+  domains?: string[] | null
+  tags?: string[] | null
 }
 
 export function toCard(raw: RiftHuntCard) {
@@ -16,6 +20,10 @@ export function toCard(raw: RiftHuntCard) {
     number: raw.riftboundId.split("-")[1] ?? "",
     rarity: raw.rarity,
     imageUrl: raw.imgUrl,
+    ...(raw.type ? { type: raw.type } : {}),
+    ...(raw.supertype ? { supertype: raw.supertype } : {}),
+    domains: raw.domains ?? [],
+    tags: raw.tags ?? [],
   }
 }
 

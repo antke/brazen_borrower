@@ -4,13 +4,20 @@ import { api } from "../../convex/_generated/api"
 import { freeCopies, poolTopUp } from "../../convex/lib/cards"
 import { searchCards, type Card } from "./cards"
 import { errorMessage } from "./format"
+import { labels } from "./labels"
+import { cardsPhrase, notify } from "./notices"
 import { sameParty, toParty, useMembers, useSession } from "./people"
 
 export type Loan = NonNullable<ReturnType<typeof useQuery<typeof api.loans.list>>>[number]
 
+/** The cards on a loan (or the ones coming back), for a notice. */
+const loanCards = (loan: Loan, items: { cardId: string; quantity: number }[] = loan.items) =>
+  cardsPhrase(items.map((i) => ({ name: loan.items.find((l) => l.cardId === i.cardId)?.card?.name ?? "A card", quantity: i.quantity })))
+
 export function useMarkReturned() {
   const markReturned = useMutation(api.loans.markReturned)
-  return (loan: Loan) => void markReturned({ id: loan._id })
+  return (loan: Loan) =>
+    void markReturned({ id: loan._id }).then(() => notify({ title: labels.returnedBy(loanCards(loan), loan.borrower.name) }))
 }
 
 /** How many copies of each card on a loan came back; only the cards with some. */
@@ -23,7 +30,9 @@ export function useReturnCards() {
   const returnCards = useMutation(api.loans.returnCards)
   return async (loan: Loan, back: Record<string, number>) => {
     try {
-      await returnCards({ id: loan._id, items: returningItems(loan, back) })
+      const items = returningItems(loan, back)
+      await returnCards({ id: loan._id, items })
+      notify({ title: labels.returnedBy(loanCards(loan, items), loan.borrower.name) })
       return ""
     } catch (e) {
       return errorMessage(e)
@@ -132,6 +141,13 @@ export function useLoanDraft() {
     }
     try {
       await create({ borrower: borrowerParty, items: items.map((i) => ({ cardId: i.card._id, quantity: i.quantity })) })
+      const named = (list: { card: Card; quantity: number }[]) => list.map((i) => ({ name: i.card.name, quantity: i.quantity }))
+      const joined = withPoolNotes.filter((i) => i.poolNote)
+      notify({
+        title: labels.lentTo(cardsPhrase(named(items)), members.find((m) => m._id === borrower)?.name ?? borrower.trim()),
+        // Lending a card that wasn't in the collection puts it there.
+        description: joined.length ? labels.addedToCollection(cardsPhrase(named(joined))) : undefined,
+      })
       setBorrower(null)
       setItems([])
       setError("")

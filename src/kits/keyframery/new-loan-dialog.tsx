@@ -1,6 +1,6 @@
 "use client"
 
-import { InfoIcon, PlusIcon, XIcon } from "lucide-react"
+import { CheckIcon, InfoIcon, PlusIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { cardLabel } from "@/core/cards"
 import { labels } from "@/core/labels"
@@ -26,14 +26,14 @@ export function NewLoanDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {/* One button, placed by kit.css (data-fab): beside the page title on wider screens, and the round +
+      {/* One button, placed by globals.css (data-fab): beside the page title on wider screens, and the round +
           in the window's corner on a phone, where its words stay for screen readers only. */}
       <DialogTrigger render={<Button variant="primary" data-fab="" />}>
         <PlusIcon aria-hidden="true" />
         <span className="max-sm:sr-only">{labels.newLoan}</span>
       </DialogTrigger>
       <DialogBackdrop />
-      {/* Never taller than the window (a bottom sheet on phones, kit.css): everything keeps its height
+      {/* Never taller than the window (a bottom sheet on phones, globals.css): everything keeps its height
           except the list of cards, which scrolls, and the footer stays at the bottom. */}
       <DialogContent className="flex flex-col [--dialog-width:44rem]">
         {/* Three groups, who / what / done, spaced wider apart than anything inside them. */}
@@ -71,7 +71,7 @@ export function NewLoanDialog() {
                           onValueChange={(quantity) => draft.setQuantity(item.card, quantity)}
                         />
                         <Button
-                          variant="ghost"
+                          variant="destructive"
                           size="icon-sm"
                           aria-label={labels.removeCard(cardLabel(item.card))}
                           onClick={() => draft.removeCard(item.card)}
@@ -109,6 +109,7 @@ export function NewLoanDialog() {
           <DialogFooter className="mt-auto">
             <DialogClose render={<Button />}>Cancel</DialogClose>
             <Button variant="primary" onClick={async () => (await draft.save()) && setOpen(false)}>
+              <CheckIcon aria-hidden="true" />
               {labels.saveLoan}
             </Button>
           </DialogFooter>

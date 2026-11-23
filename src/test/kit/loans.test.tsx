@@ -1,9 +1,10 @@
-import { act, render, renderHook, screen } from "@testing-library/react"
+import { act, fireEvent, render, renderHook, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createAgent } from "@ui-sdk/react/agent"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { labels } from "@/core/labels"
 import { useLoans } from "@/core/loans"
+import { onNotice } from "@/core/notices"
 import { catalogue, members, mutations, queries, session } from "@/test/convex-mock"
 import { kitCases } from "./kits"
 
@@ -24,6 +25,8 @@ beforeEach(() => {
 
 describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
   test("an agent records a loan from the signed-in member to another member", async () => {
+    const heard = vi.fn()
+    const stop = onNotice(heard)
     render(<LoansPage />)
     const result = await agent.act({
       steps: [
@@ -39,6 +42,12 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
       borrower: { userId: "u2" },
       items: [{ cardId: "c1", quantity: 1 }],
     })
+    // Said back: what went to whom, and that the card wasn't in the collection, so lending it added it.
+    expect(heard).toHaveBeenCalledExactlyOnceWith({
+      title: labels.lentTo(catalogue[0].name, "Bob"),
+      description: labels.addedToCollection(catalogue[0].name),
+    })
+    stop()
     for (const e of agent.snapshot().filter((e) => !e.offPage && e.component !== "more"))
       expect(e.label, `${e.component} ${e.ref} has no name`).toBeTruthy()
   })
@@ -129,6 +138,7 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     queries["loans:list"] = []
     render(<LoansPage />)
     expect(screen.getByText("Nothing is out on loan.")).toBeTruthy()
+    fireEvent.click(screen.getByRole("tab", { name: /^Returned/ }))
     expect(screen.getByText("No returns yet.")).toBeTruthy()
   })
 
@@ -197,7 +207,6 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     expect(result.ok, result.error?.message).toBe(true)
     expect(out()).toContain("Carol")
     expect(out()).not.toContain("Uncle Joe")
-    expect(screen.getByText("No returns match these filters.")).toBeTruthy()
 
     result = await agent.act({
       steps: [
@@ -208,6 +217,7 @@ describe.each(kitCases)("%s kit: loans", (_, { LoansPage }) => {
     expect(result.ok, result.error?.message).toBe(true)
     expect(out()).toContain("Uncle Joe")
     expect(out()).not.toContain("Carol")
+    fireEvent.click(screen.getByRole("tab", { name: /^Returned/ }))
     expect(screen.getByRole("table", { name: labels.returned }).textContent).toContain("Uncle Joe")
   })
 

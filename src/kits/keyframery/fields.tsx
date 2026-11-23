@@ -14,7 +14,11 @@ import {
 import { Badge, Roll } from "@/kits/keyframery/ui/badge"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/kits/keyframery/ui/empty"
 import { Field, FieldLabel } from "@/kits/keyframery/ui/field"
+import { Input, InputClear, InputGroup } from "@/kits/keyframery/ui/input"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/kits/keyframery/ui/tooltip"
 import { Item, ItemContent, ItemDescription } from "@/kits/keyframery/ui/item"
+import { SearchIcon } from "lucide-react"
+import { labels } from "@/core/labels"
 import {
   Select,
   SelectContent,
@@ -33,6 +37,37 @@ import {
   NumberInputGroup,
   NumberInputIncrement,
 } from "@/kits/keyframery/ui/number-input"
+
+/** A control with a tooltip that opens almost at once (the kit's default waits 600ms), for an icon whose meaning
+    the user is still learning. `children` is the control; it keeps its own aria-label. */
+export function Tip({ label, children }: { label: string; children: React.ReactElement<Record<string, unknown>> }) {
+  return (
+    <Tooltip delay={150}>
+      <TooltipTrigger render={children} />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** A search box: a magnifier, the text, and a button that empties it (shown while there's text). Goes in a Field
+    whose FieldLabel names it. */
+export function SearchInput({
+  value,
+  onValueChange,
+  placeholder,
+}: {
+  value: string
+  onValueChange: (value: string) => void
+  placeholder?: string
+}) {
+  return (
+    <InputGroup>
+      <SearchIcon aria-hidden="true" />
+      <Input value={value} onValueChange={onValueChange} placeholder={placeholder} />
+      <InputClear aria-label={labels.clearSearch} />
+    </InputGroup>
+  )
+}
 
 /** Pick a member, or type anyone else's name: the value is the member's id or the typed text. */
 export function PartyField({
@@ -86,21 +121,38 @@ export function PersonSelect({
   value: string
   onValueChange: (name: string) => void
 }) {
-  const show = (name: string) => name || "Anyone"
+  return <ChoiceSelect label={label} options={["", ...names].map((name) => ({ value: name, label: name || "Anyone" }))} value={value} onValueChange={onValueChange} />
+}
+
+/** Pick one of a few fixed options. */
+export function ChoiceSelect<T extends string>({
+  label,
+  hideLabel = false,
+  options,
+  value,
+  onValueChange,
+}: {
+  label: string
+  hideLabel?: boolean
+  options: { value: T; label: string }[]
+  value: T
+  onValueChange: (value: T) => void
+}) {
+  const show = (v: T) => options.find((o) => o.value === v)?.label ?? v
   return (
-    <Select<string> value={value} onValueChange={(name) => onValueChange(name ?? "")} itemToLabel={show}>
+    <Select<T> value={value} onValueChange={(v) => v !== null && onValueChange(v)} itemToLabel={show}>
       {/* No gap: the select's label brings its own space, which lines the field up with a text field beside it. */}
       <div className="flex flex-col">
-        <SelectLabel>{label}</SelectLabel>
+        <SelectLabel className={hideLabel ? "sr-only" : undefined}>{label}</SelectLabel>
         <SelectTrigger>
           <SelectValue />
         </SelectTrigger>
       </div>
       <SelectContent>
         <SelectList>
-          {["", ...names].map((name) => (
-            <SelectItem key={show(name)} value={name} label={show(name)}>
-              <SelectItemText>{show(name)}</SelectItemText>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value} label={option.label}>
+              <SelectItemText>{option.label}</SelectItemText>
               <SelectItemIndicator />
             </SelectItem>
           ))}

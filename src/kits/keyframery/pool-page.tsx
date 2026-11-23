@@ -6,10 +6,9 @@ import { usePool } from "@/core/pool"
 import { Button } from "@/kits/keyframery/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/kits/keyframery/ui/card"
 import { Field, FieldLabel } from "@/kits/keyframery/ui/field"
-import { Input } from "@/kits/keyframery/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/kits/keyframery/ui/table"
 import { CardCell } from "./cards"
-import { Available, Count, EmptyNote } from "./fields"
+import { Available, Count, EmptyNote, SearchInput } from "./fields"
 import { NewLoanDialog } from "./new-loan-dialog"
 import { PageHeader } from "./shell"
 
@@ -50,7 +49,7 @@ export function PoolPage() {
         <CardContent className="flex flex-col gap-4">
           <Field className="max-w-sm">
             <FieldLabel>{labels.filterPool}</FieldLabel>
-            <Input value={pool.filter} onValueChange={pool.setFilter} placeholder="Card or owner" />
+            <SearchInput value={pool.filter} onValueChange={pool.setFilter} placeholder="Card or owner" />
           </Field>
           {pool.rows.length === 0 ? (
             <EmptyNote>

@@ -8,22 +8,16 @@ Next.js 16, Convex, and UI SDK for every control. Card data comes from RiftHunt'
 ```sh
 pnpm exec convex dev   # pushes backend changes to the shared cloud deployment (key in .env.local)
 pnpm dev               # http://localhost:3333
-pnpm test              # every test runs against every kit
+pnpm test
 ```
 
 ## Layout
 
 - `convex/`: the backend.
-- `src/core/`: everything kits share: hooks, rules, card search, and `labels.ts`, the accessible names every kit must use.
-- `src/kits/<kit>/`: one complete interface. `ui/` is vendored from the kit's shadcn registry and kept as published.
-- `src/app/(<kit>)/`: that kit's root layout and one-line routes under `/<kit>/…`.
-- `src/proxy.ts`: serves the kit chosen by the `kit` cookie at the shared URLs (`/shared` → `/keyframery/shared`).
+- `src/core/`: hooks, rules, card search, and `labels.ts`, the accessible names every control uses.
+- `src/kits/keyframery/`: the interface. `ui/` is vendored from Keyframery's shadcn registry and kept as published.
+- `src/app/`: the root layout, `globals.css` (Tailwind and the Keyframery theme) and one-line routes.
+- `src/proxy.ts`: runs Clerk on every request.
 
-Lint enforces the boundaries: `src/core` can't import a kit, a kit can't import another kit, and nothing but UI SDK provides behaviour.
+Lint enforces the boundaries: `src/core` can't import the kit, and nothing but UI SDK provides behaviour.
 
-## Adding a kit
-
-1. Add its name to `kits` in `src/core/kit.ts` and in `eslint.config.mjs`.
-2. Skip its folder in the matcher in `src/proxy.ts`.
-3. Build `src/kits/<kit>/` and `src/app/(<kit>)/<kit>/` with the same three pages, using `labels` for every control.
-4. List its pages in `src/test/kit/kits.ts`; the shared tests then run against it.

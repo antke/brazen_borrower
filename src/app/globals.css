@@ -148,6 +148,20 @@ main > [data-slot="card"] > [data-slot="card-content"] {
 main > [data-slot="card"] > [data-slot="card-content"] > :not([data-slot="table-container"]) {
   flex-shrink: 0;
 }
+/* A table behind tabs: the tabs block and its open panel shrink the same way, so the table still scrolls inside. */
+main > [data-slot="card"] > [data-slot="card-content"] > :has(> [role="tabpanel"]) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+main > [data-slot="card"] [role="tablist"] {
+  flex-shrink: 0;
+}
+main > [data-slot="card"] [role="tabpanel"]:not([data-ending-style]) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
 main > [data-slot="card"] [data-slot="table-container"] {
   flex: 1 1 auto;
   min-height: 0;
@@ -230,6 +244,16 @@ main > [data-slot="card"][data-tone="quiet"] {
   [data-slot="table-body"] [data-slot="table-cell"][data-strong] {
     font-weight: 600;
   }
+}
+
+/* A dialog that takes the whole window, on every screen: the deck viewer. */
+[data-slot="dialog-content"][data-sheet="full"] {
+  inset: 0;
+  width: auto;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
 }
 
 /* On a phone a dialog is a bottom sheet: full width, risen from the bottom edge to just under the
@@ -332,13 +356,369 @@ main > [data-slot="card"][data-tone="quiet"] {
   --item-font: 15px;
 }
 
+/* Deck builder tiles. A browsing tile sits on tighter padding so more of them fit across. */
+[data-card-tile] {
+  --item-padding: 0.5rem;
+  --item-gap: 0.5rem;
+}
+/* A deck's card is a stamp of its art, with no padding. On a stamp and on a browsing tile's art, the copies
+   in the deck sit in the bottom right corner ("3x"); a stamp's status sits along the top. */
+[data-card-stamp] {
+  --item-padding: 0px;
+  position: relative;
+  border-radius: 5px;
+}
+[data-card-stamp] > [data-slot="card-art"] {
+  border-radius: inherit;
+}
+[data-tile-art] {
+  position: relative;
+}
+/* Builder art fills its tile or stamp and lifts a bigger preview (cards.tsx LARGE_PREVIEW). */
+:is([data-tile-art], [data-card-stamp]) {
+  --card-preview: 320px;
+}
+/* The deck's cards lift their preview to the left, over the browsing side, so it never covers a card's edit button in
+   its top right corner on the way there. Only without room on the left (a phone) does it flip to the right. */
+:is([data-card-stamp], [data-card-line]) [data-slot="card-art-preview"] {
+  position-area: left center;
+  transform-origin: right center;
+}
+:is([data-tile-art], [data-card-stamp]) > [data-slot="card-art"] {
+  width: 100%;
+}
+/* Builder art sits in a card-shaped slot, so a battlefield (landscape, so shorter) is centred in the space a card
+   takes and lines up with the cards around it. */
+:is([data-tile-art], [data-card-stamp], [data-card-line]) [data-slot="card-art"] {
+  aspect-ratio: 744 / 1039;
+  align-items: center;
+}
+/* In the deck, battlefields have a row of their own, so their stamps are only as tall as their art, with their tags on it. */
+[data-card-stamp] [data-slot="card-art"][data-landscape] {
+  aspect-ratio: auto;
+}
+/* Clicking the art adds the card, so it shows that rather than the preview's zoom. */
+[data-tile-art][data-clickable],
+[data-tile-art][data-clickable] [data-slot="card-art"] {
+  cursor: copy;
+}
+[data-tile-art][data-clickable]:active > [data-slot="card-art"] {
+  scale: 0.97;
+}
+[data-stamp-count] {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+}
+/* A deck-builder card reacts when its copies change (cards.tsx useBump): it dips and dims as a copy goes out, lifts and
+   brightens as one comes in, and its count swells, so the change reads without watching the number. */
+[data-bump="down"] [data-slot="card-art"] {
+  animation: kf-bump-down calc(420ms * var(--kf-speed, 1)) var(--ease-house);
+}
+[data-bump="up"] [data-slot="card-art"] {
+  animation: kf-bump-up calc(420ms * var(--kf-speed, 1)) var(--ease-house);
+}
+[data-bump] [data-count] {
+  animation: kf-count-swell calc(480ms * var(--kf-speed, 1)) var(--ease-pop);
+}
+[data-card-line] [data-count] {
+  display: inline-block; /* an inline span can't scale */
+}
+@keyframes kf-bump-down {
+  30% {
+    scale: 0.88;
+    filter: brightness(0.7);
+  }
+}
+@keyframes kf-bump-up {
+  30% {
+    scale: 1.06;
+    filter: brightness(1.2);
+  }
+}
+@keyframes kf-count-swell {
+  30% {
+    scale: 1.35;
+  }
+}
+/* Without motion, the card only dims or brightens for a moment. */
+@media (prefers-reduced-motion: reduce) {
+  [data-bump="down"] [data-slot="card-art"] {
+    animation-name: kf-bump-dim;
+  }
+  [data-bump="up"] [data-slot="card-art"] {
+    animation-name: kf-bump-glow;
+  }
+  [data-bump] [data-count] {
+    animation: none;
+  }
+}
+@keyframes kf-bump-dim {
+  30% {
+    filter: brightness(0.7);
+  }
+}
+@keyframes kf-bump-glow {
+  30% {
+    filter: brightness(1.2);
+  }
+}
+/* Picking several deck cards: a picked card gets a check in its top left corner and a ring round it. */
+[data-card-check] {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  width: var(--badge-height, 1.25rem);
+  --badge-padding: 0;
+}
+[data-card-check] svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 3;
+}
+:is([data-card-stamp], [data-card-line])[aria-pressed="true"] {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+/* A picked card, and the chosen champion, sit above their neighbours, so the next card along or the row below doesn't
+   paint over their outline or ring. */
+:is([data-card-stamp], [data-card-line]):is([aria-pressed="true"], [data-champion]) {
+  z-index: 1;
+}
+/* The deck viewer's cards are larger than the builder's, so their counts and status tags are a quarter larger too, to
+   read at a glance. An icon-only tag keeps its square shape (its own rule zeroes the padding). */
+[data-deck-viewer] :is([data-stamp-count], [data-stamp-tags] > [data-slot="badge"]) {
+  --badge-height: 1.5625rem;
+  --badge-font: 13.75px;
+  --badge-padding: 0.625rem;
+}
+[data-deck-viewer] [data-stamp-tags] > [data-slot="badge"] svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+[data-deck-viewer] [data-stamp-tags] {
+  max-width: calc(100% - 3.25rem); /* clear of the larger count */
+}
+/* A line is a button while picking: it reads left to right like the line it is. */
+[data-card-line] {
+  position: relative;
+}
+button[data-card-line] {
+  width: 100%;
+  text-align: start;
+  cursor: pointer;
+}
+/* One tag per status the copies are in ("2A" over "1AP"), stacked up from the bottom left corner. */
+[data-stamp-tags] {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: calc(100% - 2.5rem); /* clear of the count in the other corner */
+  --badge-padding: 0.375rem;
+  --badge-font: 10px;
+}
+/* Where a deck's copies are, one colour each: on a card's tag and on the status filters' swatches. Red: not owned at all. */
+[data-status="available"] { --status: oklch(0.78 0.14 150); }
+[data-status="borrowed"] { --status: oklch(0.8 0.11 195); } /* teal: in hand, like available, but not yours */
+[data-status="posted"] { --status: oklch(0.77 0.11 240); }
+[data-status="awaiting"] { --status: oklch(0.83 0.13 80); }
+[data-status="lent"] { --status: oklch(0.75 0.12 330); }
+[data-status="missing"] { --status: oklch(0.7 0.17 25); }
+[data-slot="badge"][data-status] {
+  --badge-face: var(--status);
+  --badge-ink: oklch(0.2 0.02 285);
+  --badge-gap: 0.125rem;
+}
+/* The icon on a card's tag (a status, or the printings count), at the tag's text size (the badge leaves icons at lucide's 24px). */
+:is([data-slot="badge"][data-status], [data-stamp-tags] > [data-slot="badge"]) svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 2.75;
+}
+/* A deck card as a list line: the art runs the row's full height, flush with its left edge and corners. */
+[data-card-line] {
+  /* Flush left for the art; on the right, the same room as between the art and the name, so the edit key isn't
+     pressed against the border. */
+  --item-padding: 0 0.75rem 0 0;
+  --item-gap: 0.75rem;
+  overflow: hidden;
+}
+[data-card-line] [data-slot="card-art"],
+[data-card-line] [data-slot="card-art"] > img {
+  border-radius: 0;
+  box-shadow: none;
+}
+/* The viewer's one-row line: the same room on every side, the art inset with rounded corners like the card it is. */
+[data-card-line][data-wide] {
+  --item-padding: 0.5rem;
+}
+[data-card-line][data-wide] [data-slot="card-art"],
+[data-card-line][data-wide] [data-slot="card-art"] > img {
+  border-radius: 3px;
+}
+/* Its count and tags read at a glance: the count a step larger, the tags a quarter larger like the viewer's stamps'. */
+[data-card-line][data-wide] [data-count] {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+[data-card-line][data-wide] [data-slot="badge"] {
+  --badge-height: 1.5625rem;
+  --badge-font: 13.75px;
+  --badge-padding: 0.625rem;
+}
+[data-card-line][data-wide] [data-slot="badge"] svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+/* A note's icon tile (its first part) is centred on its text and a little bigger than an item's, so it fills a
+   note of a title and a few lines (the kit pins it to the top whenever there's a description). */
+[data-note] > :first-child {
+  align-self: center;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+[data-note] > :first-child svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+/* A status chip in the status check: a pill of its icon and count, washed in its status colour while it holds copies.
+   Its − and + follow (data-status-chip="start", "mid" and "end"), the same wash, with hairline seams. Counts keep
+   room for two digits, so every pill is one width and they line up from card to card. */
+[data-status-chip] {
+  --button-radius: 9999px;
+}
+[data-status-chip][data-held] {
+  --button-face: color-mix(in oklch, var(--status) 24%, var(--background));
+}
+[data-chip-count] {
+  min-width: 2ch;
+  text-align: start;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+[data-status-chip="start"] {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+  padding-inline-end: 0.375rem;
+}
+[data-status-chip="mid"] {
+  border-radius: 0;
+  margin-inline-start: 1px;
+}
+[data-status-chip="end"] {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  margin-inline-start: 1px;
+}
+/* A − with nothing to take, or a + with nothing left to move: quiet, like a disabled button (it stays focusable,
+   for its tooltip). */
+[data-status-chip][aria-disabled="true"] {
+  cursor: default;
+}
+[data-status-chip][aria-disabled="true"] > svg {
+  opacity: 0.35;
+}
+/* A warning: a yellow wash with its icon on a yellow tile, the same yellow as awaiting postage. */
+[data-warn] {
+  --warning: oklch(0.83 0.13 80);
+  --item-face: color-mix(in oklch, var(--warning) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--warning) 35%, transparent);
+}
+/* The icon tile is the note's first part. */
+[data-warn] > :first-child {
+  background: var(--warning);
+  color: oklch(0.2 0.02 285);
+}
+/* A status's icon on a disc of its colour, as on the cards' tags (beats the button's own icon size). */
+[data-status-swatch] {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: var(--status);
+  color: oklch(0.2 0.02 285);
+}
+[data-status-swatch] svg {
+  width: 0.6875rem;
+  height: 0.6875rem;
+  stroke-width: 2.75;
+}
+/* A tag with only an icon is a circle; one with a count ("2" and an icon) a pill no narrower than that circle. */
+[data-slot="badge"][data-status]:has(> svg) {
+  min-width: var(--badge-height, 1.25rem);
+  --badge-padding: 0.3125rem;
+}
+[data-slot="badge"][data-status]:has(> svg):not(:has(> [data-tag-count])) {
+  width: var(--badge-height, 1.25rem);
+  --badge-padding: 0;
+}
+
+/* Clicking a deck's stamp takes a copy out, so it reads as a plain button rather than the preview's zoom.
+   Its own control (card details) sits in the top corner, shown while the pointer is on the stamp. */
+[data-card-stamp] [data-slot="card-art"] {
+  cursor: pointer;
+}
+[data-stamp-frame] {
+  position: relative;
+}
+/* The deck viewer's headings: a section's name with its count quieter beside it, and a type's subsection a step
+   smaller. Fixed line heights: the viewer counts them (20px and 18px) when it sizes the cards to fit. */
+[data-deck-label] {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+[data-deck-label="sub"] {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+[data-deck-count] {
+  font-weight: 500;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The chosen champion: a gold ring, so it stands out at a glance among the main deck. A ring, not an outline, so a
+   pick's outline still shows around it. */
+:is([data-card-stamp], [data-card-line])[data-champion] {
+  box-shadow: 0 0 0 2px oklch(0.82 0.14 85), 0 0 12px -2px oklch(0.82 0.14 85);
+}
+[data-stamp-action] {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  transition: opacity calc(120ms * var(--kf-speed, 1)) var(--ease-house);
+}
+@media (hover: hover) {
+  [data-stamp-frame]:not(:hover, :focus-within) > [data-stamp-action] {
+    opacity: 0;
+  }
+}
+
 /* A loan's row opens the loan: the whole row is clickable. */
 [data-slot="table-row"][data-clickable] {
   cursor: pointer;
 }
 
 /* Card art. The thumbnail is a stamp; resting on it lifts the full printing beside it, tilted like
-   a card picked up off the table. Anchored and fixed so a scrolling table can't clip it. */
+   a card picked up off the table. The preview is a popover (cards.tsx opens it on pointer enter), so it sits in the
+   top layer: no scrolling list, panel or dialog can clip it or stack above it. */
 [data-slot="card-art"] {
   anchor-scope: --card-art;
   anchor-name: --card-art;
@@ -347,19 +727,25 @@ main > [data-slot="card"][data-tone="quiet"] {
   flex-shrink: 0;
   cursor: zoom-in;
   border-radius: 3px;
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
 }
+/* The hairline goes round the image, not its slot, which can be taller than a battlefield. */
 [data-slot="card-art"] > img {
   border-radius: inherit;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
 }
 [data-slot="card-art-preview"] {
   position: fixed;
   position-anchor: --card-art;
   position-area: right center;
   position-try-fallbacks: flip-inline, flip-block;
+  /* The popover's own box (centred, bordered, padded, painted) gives way to the anchored card. */
+  inset: auto;
+  margin-block: 0;
   margin-inline: 14px;
-  z-index: 50;
-  width: 216px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: var(--card-preview, 216px);
   pointer-events: none;
   border-radius: 11px;
   overflow: hidden;
@@ -385,6 +771,14 @@ main > [data-slot="card"][data-tone="quiet"] {
   visibility: visible;
   transform: rotate(-2deg) scale(1);
   transition-delay: 0s;
+}
+/* A popover appears from display: none; this is where its lift starts. */
+@starting-style {
+  [data-slot="card-art-preview"]:popover-open {
+    opacity: 0;
+    visibility: hidden;
+    transform: rotate(-6deg) scale(0.4);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   [data-slot="card-art-preview"] {

@@ -21,6 +21,7 @@ export const queries: Record<string, unknown> = {
   "loans:mine": [],
   "pool:list": [],
   "pool:mine": [],
+  "decks:mine": [],
 }
 export const mutations: Record<string, ReturnType<typeof vi.fn>> = {}
 

@@ -10,12 +10,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Interface kits
 
-The look comes from the active interface kit, currently Keyframery (`src/kits/keyframery/`). Kits will be replaced or added, so every visual decision stays inside the kit and its theme. Be strict about what goes into pages and feature components.
+The look comes from the Keyframery kit (`src/kits/keyframery/`) and its theme in `src/app/globals.css`. Every visual decision stays inside the kit and that theme. Be strict about what goes into pages and feature components.
 
 - **Every component comes from the kit's wrapper.** Pages and feature components import controls and surfaces from `src/kits/<kit>/ui/<component>`, the styled wrapper, or from a kit composite built on those wrappers (`fields.tsx`, `cards.tsx`, `shell.tsx`). Don't import `ui/primitives/*`, `ui/core/*` or `@ui-sdk/*` there, and don't build a control from raw HTML (`<button>`, `<input>`, `<select>`, `<table>`, a styled `<a>`).
 - **A missing component goes into the kit, not the page.** Install it from the kit's registry into `ui/`. If the registry doesn't have it, build a composite in the kit folder from existing `ui/` wrappers.
-- **`ui/` stays as published.** Don't edit vendored files. Change their look through the theme variables listed at the top of each file (`--button-face`, `--card-radius`, …) set in `kit.css`, or through a variant the component already has.
+- **`ui/` stays as published.** Don't edit vendored files. Change their look through the theme variables listed at the top of each file (`--button-face`, `--card-radius`, …) set in `src/app/globals.css`, or through a variant the component already has.
 - **No local style overrides.** Pages and composites don't pass classes that change how a kit component looks: colour, font size, weight or tracking, radius, shadow, border, background, inner padding, transitions or motion. Classes there only arrange components: flex, grid, gap, alignment, width limits, `sr-only`.
 - **Exceptions are rare and visible.** If the kit really can't do something, the override gets a one-line comment saying why, and you mention it in your report. Prefer fixing it in the kit.
-- **Shared code goes in `src/core`.** Hooks, rules and `labels` serve every kit; nothing kit-specific goes there.
+- **Shared code goes in `src/core`.** Hooks, rules and `labels` live there; nothing kit-specific goes there.
 - **Check before finishing.** Read your diff for new `className` values, raw elements and imports against these rules.

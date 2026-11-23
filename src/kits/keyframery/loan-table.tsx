@@ -28,7 +28,7 @@ export function LoanTable({
   return (
     // Fixed column widths, so every loan table on a page lines up even when one has no last column;
     // Cards takes what's left.
-    // Phones show it as a list instead (kit.css), so the minimum width only applies from sm up; its
+    // Phones show it as a list instead (globals.css), so the minimum width only applies from sm up; its
     // labelled line wraps there, so it flows from the left (data-flow) rather than spreading.
     <Table aria-label={label} className="sm:min-w-[48rem] sm:table-fixed" data-flow="">
       <TableHeader>
@@ -41,7 +41,7 @@ export function LoanTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {/* Rows change in place, with no animation (see kit.css). */}
+        {/* Rows change in place, with no animation (see globals.css). */}
         {loans.map((loan) => (
           <LoanRow key={loan._id} loan={loan} extra={extra} canReturn={canReturn} />
         ))}

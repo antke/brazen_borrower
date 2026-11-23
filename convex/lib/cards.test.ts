@@ -18,6 +18,8 @@ test("toCard keeps the printed number's letter suffix and upper-cases the set", 
     number: "007a",
     rarity: "Common",
     imageUrl: "https://example.test/a.png",
+    domains: [],
+    tags: [],
   })
 })
 
