@@ -113,7 +113,7 @@ describe.each(kitCases)("%s kit: decks", (_, { DecksPage, DeckBuilderPage }) => 
     await importCompleteDeck(user)
     expect(screen.queryByText(labels.invalidDeckTitle)).toBeNull()
     await user.click(screen.getByRole("button", { name: labels.deckCard("Riven, Broken Blade", "chosen champion") }))
-    await user.click(screen.getByRole("combobox", { name: labels.cardStatus("Riven, Broken Blade", "chosen champion") }))
+    await user.click(screen.getByRole("combobox", { name: labels.cardStatus }))
     await user.click(screen.getByRole("option", { name: "Posted" }))
     await user.click(screen.getByRole("button", { name: "Done" }))
     await user.type(screen.getByLabelText(labels.deckName), "Exile")
@@ -232,7 +232,7 @@ describe.each(kitCases)("%s kit: decks", (_, { DecksPage, DeckBuilderPage }) => 
     // One copy out (the deck's 3 Calm Units become 2), to add back once the printing has changed.
     await user.click(screen.getByRole("button", { name: labels.removeOneFromDeck("Calm Unit", "main deck") }))
     await user.click(screen.getByRole("button", { name: labels.deckCard("Calm Unit", "main deck") }))
-    await user.click(screen.getByRole("combobox", { name: labels.cardPrinting("Calm Unit", "main deck") }))
+    await user.click(screen.getByRole("combobox", { name: labels.cardPrinting }))
     await user.click(screen.getByRole("option", { name: /Alternate Art/ }))
     // The dialog stays open on the new printing, its art swapped.
     expect(screen.getByRole("heading", { name: "Calm Unit (Alternate Art)" })).toBeTruthy()

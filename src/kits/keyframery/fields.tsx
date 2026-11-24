@@ -23,12 +23,14 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectItemIcon,
   SelectItemIndicator,
   SelectItemText,
   SelectLabel,
   SelectList,
   SelectTrigger,
   SelectValue,
+  SelectValueIcon,
 } from "@/kits/keyframery/ui/select"
 import {
   NumberInput,
@@ -124,7 +126,7 @@ export function PersonSelect({
   return <ChoiceSelect label={label} options={["", ...names].map((name) => ({ value: name, label: name || "Anyone" }))} value={value} onValueChange={onValueChange} />
 }
 
-/** Pick one of a few fixed options. */
+/** Pick one of a few fixed options, each with an icon if given (the chosen one's shows in the field too). */
 export function ChoiceSelect<T extends string>({
   label,
   hideLabel = false,
@@ -134,7 +136,7 @@ export function ChoiceSelect<T extends string>({
 }: {
   label: string
   hideLabel?: boolean
-  options: { value: T; label: string }[]
+  options: { value: T; label: string; icon?: React.ReactNode }[]
   value: T
   onValueChange: (value: T) => void
 }) {
@@ -145,6 +147,7 @@ export function ChoiceSelect<T extends string>({
       <div className="flex flex-col">
         <SelectLabel className={hideLabel ? "sr-only" : undefined}>{label}</SelectLabel>
         <SelectTrigger>
+          <SelectValueIcon />
           <SelectValue />
         </SelectTrigger>
       </div>
@@ -152,6 +155,7 @@ export function ChoiceSelect<T extends string>({
         <SelectList>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value} label={option.label}>
+              {option.icon && <SelectItemIcon>{option.icon}</SelectItemIcon>}
               <SelectItemText>{option.label}</SelectItemText>
               <SelectItemIndicator />
             </SelectItem>

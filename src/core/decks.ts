@@ -72,8 +72,9 @@ export function parseDeckCode(text: string): ParsedLine[] {
   return lines.filter((l) => l.quantity > 0)
 }
 
-/** A saved deck's exports: the sectioned list, a buy list, and its deck code (or why it has none). */
-export function useDeckExports(lines: DraftLine[]) {
+/** A saved deck's exports: the sectioned list, a buy list (of only the copies in `buyStatus`, if given), and its deck
+    code (or why it has none). */
+export function useDeckExports(lines: DraftLine[], buyStatus?: DeckStatus) {
   const catalogue = useQuery(api.catalog.list)
   let code = ""
   let codeProblem = ""
@@ -83,7 +84,7 @@ export function useDeckExports(lines: DraftLine[]) {
     // Only a fallback printing needs the catalogue, so a code usually comes before it loads.
     codeProblem = catalogue === undefined ? "Loading…" : errorMessage(e)
   }
-  return { text: deckText(lines), buyList: buyList(lines), code, codeProblem }
+  return { text: deckText(lines), buyList: buyList(buyStatus ? lines.filter((l) => l.status === buyStatus) : lines), code, codeProblem }
 }
 
 export type Deck = NonNullable<ReturnType<typeof useQuery<typeof api.decks.mine>>>[number]

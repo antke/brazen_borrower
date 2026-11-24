@@ -424,7 +424,7 @@ function DeckCard({
               {/* Every copy here is one printing; picking another swaps the art beside it. */}
               {!viewOnly && versions.length > 1 && (
                 <ChoiceSelect
-                  label={labels.cardPrinting(baseName(card.name), zone)}
+                  label={labels.cardPrinting}
                   options={versions.map((v) => ({ value: v._id, label: printingLabel(v) }))}
                   value={edit.printing._id}
                   onValueChange={(id) => setEdit({ ...edit, printing: versions.find((v) => v._id === id)! })}
@@ -457,8 +457,8 @@ function DeckCard({
                 </div>
               ) : (
                 <ChoiceSelect
-                  label={labels.cardStatus(card.name, zone)}
-                  options={STATUSES.map((s) => ({ value: s.status, label: s.label }))}
+                  label={labels.cardStatus}
+                  options={STATUSES.map((s) => ({ value: s.status, label: s.label, icon: <StatusIcon status={s.status} /> }))}
                   value={single}
                   onValueChange={(next) => setEdit({ ...edit, copies: { ...NO_COPIES, [next]: 1 } })}
                 />
@@ -1324,7 +1324,8 @@ function ExportDialog({ title, lines }: { title: string; lines: DraftLine[] }) {
 function ExportFormats({ title, lines }: { title: string; lines: DraftLine[] }) {
   const [format, setFormat] = useState<(typeof EXPORTS)[number]["value"]>("text")
   const [copied, setCopied] = useState(false)
-  const exports = useDeckExports(lines)
+  const [buyStatus, setBuyStatus] = useState<DeckStatus | "">("")
+  const exports = useDeckExports(lines, buyStatus || undefined)
   const text = exports[format]
   return (
     <div className="flex flex-col gap-6">
@@ -1352,10 +1353,27 @@ function ExportFormats({ title, lines }: { title: string; lines: DraftLine[] }) 
             {e.value === "code" && exports.codeProblem ? (
               <Note warn>{exports.codeProblem}</Note>
             ) : (
-              <Field>
-                <FieldLabel className="sr-only">{e.label}</FieldLabel>
-                <Textarea value={exports[e.value]} readOnly />
-              </Field>
+              <div className="flex flex-col gap-3">
+                {/* A buy list of only, say, the cards not in the collection: what's left to buy. */}
+                {e.value === "buyList" && (
+                  <ChoiceSelect
+                    label={labels.buyStatus}
+                    options={[
+                      { value: "", label: "Every card" },
+                      ...STATUSES.filter((s) => lines.some((l) => l.status === s.status)).map((s) => ({ value: s.status, label: s.label, icon: <StatusIcon status={s.status} /> })),
+                    ]}
+                    value={buyStatus}
+                    onValueChange={(status) => {
+                      setBuyStatus(status)
+                      setCopied(false)
+                    }}
+                  />
+                )}
+                <Field>
+                  <FieldLabel className="sr-only">{e.label}</FieldLabel>
+                  <Textarea value={exports[e.value]} readOnly />
+                </Field>
+              </div>
             )}
           </TabsPanel>
         ))}
