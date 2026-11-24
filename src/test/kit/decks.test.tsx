@@ -75,7 +75,8 @@ describe.each(kitCases)("%s kit: decks", (_, { DecksPage, DeckBuilderPage }) => 
     const table = screen.getByRole("table", { name: labels.myDecks })
     const title = "Riven, The Exile + Riven, Broken Blade"
     expect(table.textContent).toContain(title)
-    expect(within(table).getByText("Posted 1")).toBeTruthy()
+    // A status tag: its count and icon, named for screen readers.
+    expect(within(table).getByRole("img", { name: "Posted: 1" })).toBeTruthy()
     // Saved with only a legend and champion: it's in the list, marked invalid, with why on hover.
     expect(within(table).getByText(labels.invalidDeck).getAttribute("title")).toContain("Main deck: 0 of 39")
     expect(screen.getByRole("link", { name: labels.editDeck(title) }).getAttribute("href")).toBe("/decks/d1")

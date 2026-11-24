@@ -1257,10 +1257,11 @@ export function DeckBuilderPage({ id }: { id: string }) {
 function DeckViewer({ deck, title, open, onOpenChange }: { deck: Deck; title: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger render={<Button size="sm" variant="primary" aria-label={labels.viewDeck(title)} />}>
-        <EyeIcon aria-hidden="true" />
-        View
-      </DialogTrigger>
+      <Tip label="View">
+        <DialogTrigger render={<Button size="icon-sm" variant="primary" aria-label={labels.viewDeck(title)} />}>
+          <EyeIcon aria-hidden="true" />
+        </DialogTrigger>
+      </Tip>
       <DialogBackdrop />
       <DialogContent data-sheet="full" className="flex flex-col">
         <DialogClose variant="icon" />
@@ -1303,15 +1304,19 @@ const EXPORTS = [
   { value: "code", label: "Deck code", about: "The code Piltover Archive and other Riftbound deck sites import." },
 ] as const
 
-function ExportDialog({ title, lines }: { title: string; lines: DraftLine[] }) {
+/** `compact` (the decks list): the key is just its icon, named by a tooltip. */
+function ExportDialog({ title, lines, compact }: { title: string; lines: DraftLine[]; compact?: boolean }) {
   // A new key each opening starts the dialog afresh: the deck list, nothing copied yet.
   const [opened, setOpened] = useState(0)
+  const trigger = (
+    <DialogTrigger render={<Button size={compact ? "icon-sm" : "sm"} aria-label={labels.exportDeck(title)} />}>
+      <ShareIcon aria-hidden="true" />
+      {!compact && "Export"}
+    </DialogTrigger>
+  )
   return (
     <Dialog onOpenChange={(open: boolean) => open && setOpened((n) => n + 1)}>
-      <DialogTrigger render={<Button size="sm" aria-label={labels.exportDeck(title)} />}>
-        <ShareIcon aria-hidden="true" />
-        Export
-      </DialogTrigger>
+      {compact ? <Tip label="Export">{trigger}</Tip> : trigger}
       <DialogBackdrop />
       <DialogContent className="flex flex-col [--dialog-width:32rem]">
         <DialogClose variant="icon" />
@@ -1395,10 +1400,11 @@ function ExportFormats({ title, lines }: { title: string; lines: DraftLine[] }) 
 function DeleteDeckDialog({ title, onDelete }: { title: string; onDelete: () => void }) {
   return (
     <Dialog>
-      <DialogTrigger render={<Button size="sm" variant="destructive" aria-label={labels.deleteDeck(title)} />}>
-        <Trash2Icon aria-hidden="true" />
-        Delete
-      </DialogTrigger>
+      <Tip label="Delete">
+        <DialogTrigger render={<Button size="icon-sm" variant="destructive" aria-label={labels.deleteDeck(title)} />}>
+          <Trash2Icon aria-hidden="true" />
+        </DialogTrigger>
+      </Tip>
       <DialogBackdrop />
       <DialogContent>
         <div className="flex flex-col gap-6">
@@ -1465,22 +1471,30 @@ function DeckRow({ deck, onDelete }: { deck: Deck; onDelete: () => void }) {
           {away.size === 0 ? (
             <Badge variant="outline">All in hand</Badge>
           ) : (
-            STATUSES.filter((s) => away.has(s.status)).map((s) => (
-              <Badge key={s.status} variant="secondary">
-                {s.label} {away.get(s.status)}
-              </Badge>
-            ))
+            // A tag per status, its count and icon in the status's colour; the name on hover, the whole to screen readers.
+            STATUSES.filter((s) => away.has(s.status)).map(({ status, label }) => {
+              const Icon = STATUS_ICONS[status]
+              return (
+                <Tip key={status} label={label}>
+                  <Badge data-status={status} role="img" aria-label={`${label}: ${away.get(status)}`}>
+                    <span data-tag-count="">{away.get(status)}</span>
+                    <Icon aria-hidden="true" />
+                  </Badge>
+                </Tip>
+              )
+            })
           )}
         </span>
       </TableCell>
       <TableCell data-col="end">
-        <span className="flex flex-wrap gap-2">
+        <span className="flex gap-1">
           <DeckViewer deck={deck} title={title} open={open} onOpenChange={setOpen} />
-          <Button size="sm" aria-label={labels.editDeck(title)} render={<Link href={`/decks/${deck._id}`} />}>
-            <PencilIcon aria-hidden="true" />
-            Edit
-          </Button>
-          <ExportDialog title={title} lines={lines} />
+          <Tip label="Edit">
+            <Button size="icon-sm" aria-label={labels.editDeck(title)} render={<Link href={`/decks/${deck._id}`} />}>
+              <PencilIcon aria-hidden="true" />
+            </Button>
+          </Tip>
+          <ExportDialog title={title} lines={lines} compact />
           <DeleteDeckDialog title={title} onDelete={onDelete} />
         </span>
       </TableCell>
