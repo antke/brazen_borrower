@@ -1099,7 +1099,8 @@ function FitDeck({
       s.subs.map((sub, j) => ({ count: sub.groups.length, ratio: PORTRAIT, extra: j === 0 && (i > 0 || hasLead) ? sectionGap - subGap : 0 }))
     ),
   ]
-  const sized = fitCards(groups, width, cardsHeight, gap, subGap)
+  // 440px tall is about a card in hand: a filter that leaves one or two cards shows them that size, not screen-high.
+  const sized = fitCards(groups, width, cardsHeight, gap, subGap, 440)
   // 17.5rem keeps a one-row line's name readable beside its colours, count, tags and edit key.
   const lined = fitLines(groups, width, Math.floor((cardsHeight + gap) / (lineHeight + gap)), gap, subGap, 280)
   const { rows, cardHeight: h } = lines ? { rows: lined.rows, cardHeight: lined.columnWidth } : sized

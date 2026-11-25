@@ -22,6 +22,10 @@ describe("fitCards", () => {
     expect(fitCards([{ count: 4, ratio: 1 }], 100, 400, 0, 0)).toEqual({ rows: 4, cardHeight: 100 })
   })
 
+  test("a lone card stops at the largest height, in one row", () => {
+    expect(fitCards([{ count: 2, ratio: 1 }], 2000, 2000, 0, 0, 300)).toEqual({ rows: 1, cardHeight: 300 })
+  })
+
   test("a whole deck fits a laptop's window, every card counted with the gaps between them", () => {
     const groups = [
       { count: 4, ratio: PORTRAIT },

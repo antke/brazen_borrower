@@ -7,13 +7,14 @@ export const LANDSCAPE = 1039 / 744
 /** Groups of cards laid side by side, all one height, each filling `rows` rows top to bottom and then its next column:
     the rows and card height (whole pixels) that show every card in `width` × `height` as large as they can be. `gap` is
     between cards, `groupGap` between groups; `ratio` is a group's card width over height, and `extra` any fixed width
-    it takes besides (a panel's inner gaps). */
+    it takes besides (a panel's inner gaps). No card grows past `maxHeight`, so a few cards don't fill the screen. */
 export function fitCards(
   groups: { count: number; ratio: number; extra?: number }[],
   width: number,
   height: number,
   gap: number,
-  groupGap: number
+  groupGap: number,
+  maxHeight = Infinity
 ) {
   let best = { rows: 1, cardHeight: 0 }
   const most = Math.max(1, ...groups.map((g) => g.count))
@@ -22,7 +23,7 @@ export function fitCards(
     const gaps =
       groups.reduce((sum, g, i) => sum + Math.max(0, columns[i] - 1) * gap + (g.extra ?? 0), 0) + Math.max(0, groups.length - 1) * groupGap
     const cardWidths = groups.reduce((sum, g, i) => sum + columns[i] * g.ratio, 0)
-    const cardHeight = Math.floor(Math.min((height - (rows - 1) * gap) / rows, (width - gaps) / cardWidths))
+    const cardHeight = Math.floor(Math.min((height - (rows - 1) * gap) / rows, (width - gaps) / cardWidths, maxHeight))
     if (cardHeight > best.cardHeight) best = { rows, cardHeight }
   }
   return best
